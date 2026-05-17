@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:thing_note/app/theme/theme_provider.dart';
 import 'package:thing_note/features/record/data/record_repository_impl.dart';
+import 'package:thing_note/features/record/presentation/providers/record_provider.dart';
+import 'package:thing_note/features/thing_name/presentation/providers/thing_name_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -98,7 +100,7 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 32),
           Center(
             child: Text(
-              '事件记录 v1.0.1',
+              '事件记录 v0.0.2',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.outline,
                   ),
@@ -164,6 +166,7 @@ class SettingsScreen extends ConsumerWidget {
           TextButton(
             onPressed: () async {
               await ref.read(recordRepositoryProvider).deleteAll();
+              ref.invalidate(recordListProvider);
               if (ctx.mounted) Navigator.pop(ctx);
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(

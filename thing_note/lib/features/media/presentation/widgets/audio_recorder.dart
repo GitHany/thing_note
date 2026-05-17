@@ -20,15 +20,17 @@ class AudioRecorderSection extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<AudioRecorderSection> createState() =>
-      _AudioRecorderSectionState();
+      AudioRecorderSectionState();
 }
 
-class _AudioRecorderSectionState extends ConsumerState<AudioRecorderSection> {
+class AudioRecorderSectionState extends ConsumerState<AudioRecorderSection> {
   bool _isRecording = false;
   Duration _recordingDuration = Duration.zero;
   Timer? _timer;
   late List<String> _audioPaths;
   late List<int> _audioDurationsSec;
+
+  bool get isRecording => _isRecording;
 
   @override
   void initState() {
@@ -66,7 +68,9 @@ class _AudioRecorderSectionState extends ConsumerState<AudioRecorderSection> {
     }
   }
 
-  Future<void> _stopRecording() async {
+  Future<void> stopRecording() async {
+    if (!_isRecording) return;
+
     final path = await ref.read(mediaServiceProvider).stopRecording();
     _timer?.cancel();
     _timer = null;
@@ -139,7 +143,7 @@ class _AudioRecorderSectionState extends ConsumerState<AudioRecorderSection> {
                 ),
                 const Spacer(),
                 FilledButton.icon(
-                  onPressed: _stopRecording,
+                  onPressed: stopRecording,
                   icon: const Icon(Icons.stop),
                   label: const Text('停止'),
                 ),

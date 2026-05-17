@@ -31,6 +31,7 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
   bool _isEditing = false;
   bool _isLoading = false;
   bool _isChanged = false;
+  final GlobalKey<AudioRecorderSectionState> _audioRecorderKey = GlobalKey();
 
   @override
   void initState() {
@@ -110,11 +111,20 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
     super.dispose();
   }
 
+  Future<void> _stopRecordingIfNeeded() async {
+    final audioRecorderState = _audioRecorderKey.currentState;
+    if (audioRecorderState != null && audioRecorderState.isRecording) {
+      await audioRecorderState.stopRecording();
+    }
+  }
+
   Future<void> _save() async {
     if (_isLoading) return;
     setState(() => _isLoading = true);
 
     try {
+      await _stopRecordingIfNeeded();
+
       final now = DateTime.now();
 
       List<String> savedPhotoPaths = [];
@@ -285,6 +295,7 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
               ),
               const SizedBox(height: 16),
               AudioRecorderSection(
+                key: _audioRecorderKey,
                 initialAudioPaths: _audioPaths,
                 initialAudioDurationsSec: _audioDurationsSec,
                 onAudioChanged: (paths, durationsSec) {
@@ -329,6 +340,9 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
   }
 
   Future<void> _showThingNamePicker(List<ThingName> thingNames) async {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final maxHeight = screenHeight * 0.5;
+    
     final result = await showModalBottomSheet<int?>(
       context: context,
       isScrollControlled: true,
@@ -342,70 +356,73 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
                 : thingNames
                     .where((t) => t.name.contains(searchQuery))
                     .toList();
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                    child: TextField(
-                      autofocus: true,
-                      decoration: InputDecoration(
-                        hintText: '搜索事件名称',
-                        prefixIcon: const Icon(Icons.search),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        isDense: true,
-                      ),
-                      onChanged: (value) {
-                        setModalState(() => searchQuery = value);
-                      },
-                    ),
-                  ),
-                  ListTile(
-                    title: const Text('不选择'),
-                    onTap: () => Navigator.pop(context, null),
-                  ),
-                  const Divider(height: 1),
-                  Expanded(
-                    child: filtered.isEmpty
-                        ? Center(
-                            child: Text(
-                              '无匹配结果',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .outline,
-                                  ),
-                            ),
-                          )
-                        : ListView.separated(
-                            shrinkWrap: true,
-                            itemCount: filtered.length,
-                            separatorBuilder: (context, index) =>
-                                const Divider(height: 1),
-                            itemBuilder: (context, index) {
-                              final thingName = filtered[index];
-                              return ListTile(
-                                title: Text(thingName.name),
-                                onTap: () =>
-                                    Navigator.pop(context, thingName.id),
-                              );
-                            },
+            return Container(
+              constraints: BoxConstraints(maxHeight: maxHeight),
+              child: Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      child: TextField(
+                        autofocus: true,
+                        decoration: InputDecoration(
+                          hintText: '搜索事件名称',
+                          prefixIcon: const Icon(Icons.search),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                  ),
-                ],
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          isDense: true,
+                        ),
+                        onChanged: (value) {
+                          setModalState(() => searchQuery = value);
+                        },
+                      ),
+                    ),
+                    ListTile(
+                      title: const Text('不选择'),
+                      onTap: () => Navigator.pop(context, null),
+                    ),
+                    const Divider(height: 1),
+                    Expanded(
+                      child: filtered.isEmpty
+                          ? Center(
+                              child: Text(
+                                '无匹配结果',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .outline,
+                                    ),
+                              ),
+                            )
+                          : ListView.separated(
+                              shrinkWrap: true,
+                              itemCount: filtered.length,
+                              separatorBuilder: (context, index) =>
+                                  const Divider(height: 1),
+                              itemBuilder: (context, index) {
+                                final thingName = filtered[index];
+                                return ListTile(
+                                  title: Text(thingName.name),
+                                  onTap: () =>
+                                      Navigator.pop(context, thingName.id),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
               ),
             );
           },
