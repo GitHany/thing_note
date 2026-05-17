@@ -8,10 +8,13 @@ class ZipExporter {
   static Future<File> exportRecords({
     required List<EpisodeRecord> records,
     required List<String> thingNames,
+    void Function(int current, int total)? onProgress,
   }) async {
     final archive = Archive();
+    final total = records.length;
 
-    for (final record in records) {
+    for (int i = 0; i < records.length; i++) {
+      final record = records[i];
       final folderName = 'record_${record.id}_${record.occurredAt.toIso8601String().replaceAll(':', '-')}';
 
       final infoBuffer = StringBuffer();
@@ -26,23 +29,25 @@ class ZipExporter {
       final infoData = utf8.encode(infoBuffer.toString());
       archive.addFile(ArchiveFile('$folderName/info.txt', infoData.length, infoData));
 
-      for (int i = 0; i < record.photoPaths.length; i++) {
-        final photoFile = File(record.photoPaths[i]);
+      for (int j = 0; j < record.photoPaths.length; j++) {
+        final photoFile = File(record.photoPaths[j]);
         if (await photoFile.exists()) {
           final photoData = await photoFile.readAsBytes();
           final ext = photoFile.path.split('.').last;
-          archive.addFile(ArchiveFile('$folderName/photos/photo_$i.$ext', photoData.length, photoData));
+          archive.addFile(ArchiveFile('$folderName/photos/photo_$j.$ext', photoData.length, photoData));
         }
       }
 
-      for (int i = 0; i < record.audioPaths.length; i++) {
-        final audioFile = File(record.audioPaths[i]);
+      for (int j = 0; j < record.audioPaths.length; j++) {
+        final audioFile = File(record.audioPaths[j]);
         if (await audioFile.exists()) {
           final audioData = await audioFile.readAsBytes();
           final ext = audioFile.path.split('.').last;
-          archive.addFile(ArchiveFile('$folderName/audios/audio_$i.$ext', audioData.length, audioData));
+          archive.addFile(ArchiveFile('$folderName/audios/audio_$j.$ext', audioData.length, audioData));
         }
       }
+
+      onProgress?.call(i + 1, total);
     }
 
     final zipData = ZipEncoder().encode(archive);

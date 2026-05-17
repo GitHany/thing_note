@@ -5,6 +5,7 @@ import 'package:thing_note/core/utils/file_storage.dart';
 import 'package:thing_note/features/media/presentation/providers/media_provider.dart';
 import 'package:thing_note/features/media/presentation/widgets/audio_player.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class AudioRecorderSection extends ConsumerStatefulWidget {
   final List<String> initialAudioPaths;
@@ -23,8 +24,10 @@ class AudioRecorderSection extends ConsumerStatefulWidget {
       AudioRecorderSectionState();
 }
 
-class AudioRecorderSectionState extends ConsumerState<AudioRecorderSection> {
+class AudioRecorderSectionState extends ConsumerState<AudioRecorderSection>
+    with WidgetsBindingObserver {
   bool _isRecording = false;
+  bool _isInitializing = false;
   Duration _recordingDuration = Duration.zero;
   Timer? _timer;
   late List<String> _audioPaths;
@@ -35,55 +38,134 @@ class AudioRecorderSectionState extends ConsumerState<AudioRecorderSection> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _audioPaths = List.from(widget.initialAudioPaths);
     _audioDurationsSec = List.from(widget.initialAudioDurationsSec);
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
+    if (_isRecording) {
+      ref.read(mediaServiceProvider).stopRecording();
+    }
     super.dispose();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused && _isRecording) {
+      stopRecording();
+    }
+  }
+
+  Future<bool> _checkPermission() async {
+    final status = await Permission.microphone.status;
+    if (status.isDenied) {
+      final result = await Permission.microphone.request();
+      return result.isGranted;
+    }
+    if (status.isPermanentlyDenied) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('麦克风权限被拒绝，请在设置中开启'),
+            action: SnackBarAction(
+              label: '设置',
+              onPressed: () => openAppSettings(),
+            ),
+          ),
+        );
+      }
+      return false;
+    }
+    return status.isGranted;
+  }
+
   Future<void> _startRecording() async {
-    final path = await ref.read(mediaServiceProvider).recordAudio();
-    if (path != null) {
-      setState(() {
-        _isRecording = true;
-        _recordingDuration = Duration.zero;
-      });
-      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+    if (_isRecording || _isInitializing) return;
+
+    final hasPermission = await _checkPermission();
+    if (!hasPermission) return;
+
+    setState(() {
+      _isInitializing = true;
+    });
+
+    try {
+      final path = await ref.read(mediaServiceProvider).recordAudio();
+      if (path != null) {
+        _timer?.cancel();
         setState(() {
-          _recordingDuration += const Duration(seconds: 1);
+          _isRecording = true;
+          _isInitializing = false;
+          _recordingDuration = Duration.zero;
         });
-      });
-    } else {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+          if (mounted) {
+            setState(() {
+              _recordingDuration += const Duration(seconds: 1);
+            });
+          }
+        });
+      } else {
+        setState(() {
+          _isInitializing = false;
+        });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('请允许录音权限')),
+            const SnackBar(content: Text('录音启动失败，请重试')),
           );
         }
+      }
+    } catch (e) {
+      setState(() {
+        _isInitializing = false;
       });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('录音失败: $e')),
+        );
+      }
     }
   }
 
   Future<void> stopRecording() async {
     if (!_isRecording) return;
 
-    final path = await ref.read(mediaServiceProvider).stopRecording();
-    _timer?.cancel();
-    _timer = null;
-    setState(() {
-      _isRecording = false;
-    });
-    if (path != null) {
-      final savedPath = await FileStorage.saveAudioFile(path);
+    try {
+      final path = await ref.read(mediaServiceProvider).stopRecording();
+      _timer?.cancel();
+      _timer = null;
       setState(() {
-        _audioPaths.add(savedPath);
-        _audioDurationsSec.add(_recordingDuration.inSeconds);
+        _isRecording = false;
       });
-      widget.onAudioChanged(_audioPaths, _audioDurationsSec);
+      if (path != null && mounted) {
+        try {
+          final savedPath = await FileStorage.saveAudioFile(path);
+          setState(() {
+            _audioPaths.add(savedPath);
+            _audioDurationsSec.add(_recordingDuration.inSeconds);
+          });
+          widget.onAudioChanged(_audioPaths, _audioDurationsSec);
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('保存录音失败: $e')),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      setState(() {
+        _isRecording = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('停止录音失败: $e')),
+        );
+      }
     }
   }
 
@@ -100,7 +182,10 @@ class AudioRecorderSectionState extends ConsumerState<AudioRecorderSection> {
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('删除'),
+            child: Text(
+              '删除',
+              style: TextStyle(color: Theme.of(ctx).colorScheme.error),
+            ),
           ),
         ],
       ),
@@ -128,7 +213,7 @@ class AudioRecorderSectionState extends ConsumerState<AudioRecorderSection> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.errorContainer,
+              color: Theme.of(context).colorScheme.primaryContainer,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -154,9 +239,15 @@ class AudioRecorderSectionState extends ConsumerState<AudioRecorderSection> {
           Row(
             children: [
               FilledButton.icon(
-                onPressed: _startRecording,
-                icon: const Icon(Icons.mic),
-                label: const Text('添加录音'),
+                onPressed: _isInitializing ? null : _startRecording,
+                icon: _isInitializing
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.mic),
+                label: Text(_isInitializing ? '初始化中...' : '添加录音'),
               ),
             ],
           ),

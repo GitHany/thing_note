@@ -69,6 +69,16 @@ class _ThingNameManageScreenState extends ConsumerState<ThingNameManageScreen> {
                 );
                 return;
               }
+              final existingNames = ref.read(thingNameListProvider).valueOrNull ?? [];
+              final isDuplicate = existingNames.any(
+                (tn) => tn.name.toLowerCase() == name.toLowerCase(),
+              );
+              if (isDuplicate) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('事件名称"$name"已存在，请使用其他名称')),
+                );
+                return;
+              }
               ref.read(thingNameNotifierProvider.notifier).add(
                 name,
                 remark: _remarkController.text.trim().isEmpty

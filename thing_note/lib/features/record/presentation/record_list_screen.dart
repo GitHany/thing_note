@@ -1,9 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:thing_note/features/export/data/zip_exporter.dart';
+import 'package:thing_note/features/export/presentation/providers/export_import_provider.dart';
 import 'package:thing_note/features/record/domain/episode_record.dart';
 import 'package:thing_note/features/record/presentation/providers/record_provider.dart';
 import 'package:thing_note/features/record/presentation/widgets/record_card.dart';
@@ -98,16 +99,40 @@ class _RecordListScreenState extends ConsumerState<RecordListScreen> {
       final thingNameMap = thingNamesAsync.valueOrNull;
       final thingNames = thingNameMap?.map((tn) => tn.name).toList() ?? [];
 
-      final zipFile = await ZipExporter.exportRecords(
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => Consumer(
+          builder: (context, ref, _) {
+            final exportState = ref.watch(exportImportNotifierProvider);
+            return AlertDialog(
+              title: const Text('导出中'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  LinearProgressIndicator(value: exportState.progress),
+                  const SizedBox(height: 16),
+                  Text(exportState.statusMessage),
+                ],
+              ),
+            );
+          },
+        ),
+      );
+
+      final zipFile = await ref.read(exportImportNotifierProvider.notifier).exportRecords(
         records: records,
         thingNames: thingNames,
       );
 
-      if (mounted) {
+      if (mounted) Navigator.pop(context);
+
+      if (zipFile != null && mounted) {
         await Share.shareXFiles([XFile(zipFile.path)], text: '分享 ${_selectedRecordIds.length} 条记录');
       }
     } catch (e) {
       if (mounted) {
+        Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('分享失败: $e')),
         );

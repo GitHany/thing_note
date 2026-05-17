@@ -340,33 +340,31 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
   }
 
   Future<void> _showThingNamePicker(List<ThingName> thingNames) async {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final maxHeight = screenHeight * 0.5;
-    
-    final result = await showModalBottomSheet<int?>(
+    final result = await showDialog<int?>(
       context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (context) {
+      barrierColor: Colors.black54,
+      builder: (dialogContext) {
         String searchQuery = '';
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            final filtered = searchQuery.isEmpty
-                ? thingNames
-                : thingNames
-                    .where((t) => t.name.contains(searchQuery))
-                    .toList();
-            return Container(
-              constraints: BoxConstraints(maxHeight: maxHeight),
-              child: Padding(
-                padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).viewInsets.bottom,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+        return Dialog.fullscreen(
+          child: Scaffold(
+            appBar: AppBar(
+              title: const Text('选择事件名称'),
+              leading: IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.pop(dialogContext),
+              ),
+            ),
+            body: StatefulBuilder(
+              builder: (context, setModalState) {
+                final filtered = searchQuery.isEmpty
+                    ? thingNames
+                    : thingNames
+                        .where((t) => t.name.contains(searchQuery))
+                        .toList();
+                return Column(
                   children: [
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      padding: const EdgeInsets.all(16),
                       child: TextField(
                         autofocus: true,
                         decoration: InputDecoration(
@@ -379,7 +377,6 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
                             horizontal: 16,
                             vertical: 12,
                           ),
-                          isDense: true,
                         ),
                         onChanged: (value) {
                           setModalState(() => searchQuery = value);
@@ -387,8 +384,9 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
                       ),
                     ),
                     ListTile(
+                      leading: const Icon(Icons.block),
                       title: const Text('不选择'),
-                      onTap: () => Navigator.pop(context, null),
+                      onTap: () => Navigator.pop(dialogContext, null),
                     ),
                     const Divider(height: 1),
                     Expanded(
@@ -406,26 +404,23 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
                                     ),
                               ),
                             )
-                          : ListView.separated(
-                              shrinkWrap: true,
+                          : ListView.builder(
                               itemCount: filtered.length,
-                              separatorBuilder: (context, index) =>
-                                  const Divider(height: 1),
                               itemBuilder: (context, index) {
                                 final thingName = filtered[index];
                                 return ListTile(
                                   title: Text(thingName.name),
                                   onTap: () =>
-                                      Navigator.pop(context, thingName.id),
+                                      Navigator.pop(dialogContext, thingName.id),
                                 );
                               },
                             ),
                     ),
                   ],
-                ),
-              ),
-            );
-          },
+                );
+              },
+            ),
+          ),
         );
       },
     );

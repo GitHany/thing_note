@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:thing_note/core/database/database_provider.dart';
@@ -98,12 +99,42 @@ class RecordRepositoryImpl implements RecordRepository {
   @override
   Future<void> delete(int id) async {
     final db = await _db;
+    final record = await getById(id);
+    if (record != null) {
+      for (final path in record.photoPaths) {
+        final file = File(path);
+        if (await file.exists()) {
+          await file.delete();
+        }
+      }
+      for (final path in record.audioPaths) {
+        final file = File(path);
+        if (await file.exists()) {
+          await file.delete();
+        }
+      }
+    }
     await db.delete('episode_records', where: 'id = ?', whereArgs: [id]);
   }
 
   @override
   Future<void> deleteAll() async {
     final db = await _db;
+    final records = await getAll();
+    for (final record in records) {
+      for (final path in record.photoPaths) {
+        final file = File(path);
+        if (await file.exists()) {
+          await file.delete();
+        }
+      }
+      for (final path in record.audioPaths) {
+        final file = File(path);
+        if (await file.exists()) {
+          await file.delete();
+        }
+      }
+    }
     await db.delete('episode_records');
   }
 

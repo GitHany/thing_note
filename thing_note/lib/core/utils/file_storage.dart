@@ -45,6 +45,28 @@ class FileStorage {
     return destFile.path;
   }
 
+  static Future<String> saveAudioBytes(List<int> bytes, String ext) async {
+    final audioDir = await audioDirectory;
+    if (!await audioDir.exists()) {
+      await audioDir.create(recursive: true);
+    }
+    final fileName = 'audio_${DateTime.now().millisecondsSinceEpoch}.$ext';
+    final destFile = File('${audioDir.path}/$fileName');
+    await destFile.writeAsBytes(bytes);
+    return destFile.path;
+  }
+
+  static Future<String> savePhotoBytes(List<int> bytes, String ext) async {
+    final photosDir = await photosDirectory;
+    if (!await photosDir.exists()) {
+      await photosDir.create(recursive: true);
+    }
+    final fileName = 'photo_${DateTime.now().millisecondsSinceEpoch}.$ext';
+    final destFile = File('${photosDir.path}/$fileName');
+    await destFile.writeAsBytes(bytes);
+    return destFile.path;
+  }
+
   static Future<void> deleteFile(String path) async {
     final file = File(path);
     if (await file.exists()) {

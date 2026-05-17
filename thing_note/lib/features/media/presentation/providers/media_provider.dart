@@ -3,5 +3,9 @@ import 'package:thing_note/features/media/data/media_service_impl.dart';
 import 'package:thing_note/features/media/domain/media_service.dart';
 
 final mediaServiceProvider = Provider<MediaService>((ref) {
-  return MediaServiceImpl();
+  final service = MediaServiceImpl();
+  ref.onDispose(() {
+    service.dispose();
+  });
+  return service;
 });

@@ -113,3 +113,6 @@ AndroidManifest.xml
 .env
 .env.local
 .env.*.local
+
+# Design docs
+docs/
