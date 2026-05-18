@@ -7,6 +7,8 @@ class EpisodeRecord {
   final List<String> audioPaths;
   final List<int> audioDurationsSec;
   final int? thingNameId;
+  final String? annotationsJson;
+  final bool hasReminder;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -19,6 +21,8 @@ class EpisodeRecord {
     this.audioPaths = const [],
     this.audioDurationsSec = const [],
     this.thingNameId,
+    this.annotationsJson,
+    this.hasReminder = false,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -32,6 +36,8 @@ class EpisodeRecord {
     List<String>? audioPaths,
     List<int>? audioDurationsSec,
     int? thingNameId,
+    String? annotationsJson,
+    bool? hasReminder,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -44,6 +50,8 @@ class EpisodeRecord {
       audioPaths: audioPaths ?? this.audioPaths,
       audioDurationsSec: audioDurationsSec ?? this.audioDurationsSec,
       thingNameId: thingNameId ?? this.thingNameId,
+      annotationsJson: annotationsJson ?? this.annotationsJson,
+      hasReminder: hasReminder ?? this.hasReminder,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -52,5 +60,9 @@ class EpisodeRecord {
   Duration get duration => Duration(seconds: durationSec);
   bool get hasPhotos => photoPaths.isNotEmpty;
   bool get hasAudio => audioPaths.isNotEmpty;
+  bool get hasAnnotations =>
+      annotationsJson != null &&
+      annotationsJson!.isNotEmpty &&
+      annotationsJson != '{"version":1,"elements":[]}';
   int get totalAudioDurationSec => audioDurationsSec.fold(0, (sum, d) => sum + d);
 }

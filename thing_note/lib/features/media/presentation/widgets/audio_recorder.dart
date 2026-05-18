@@ -11,12 +11,14 @@ class AudioRecorderSection extends ConsumerStatefulWidget {
   final List<String> initialAudioPaths;
   final List<int> initialAudioDurationsSec;
   final void Function(List<String> paths, List<int> durationsSec) onAudioChanged;
+  final void Function(bool isRecording)? onRecordingStateChanged;
 
   const AudioRecorderSection({
     super.key,
     this.initialAudioPaths = const [],
     this.initialAudioDurationsSec = const [],
     required this.onAudioChanged,
+    this.onRecordingStateChanged,
   });
 
   @override
@@ -32,6 +34,8 @@ class AudioRecorderSectionState extends ConsumerState<AudioRecorderSection>
   Timer? _timer;
   late List<String> _audioPaths;
   late List<int> _audioDurationsSec;
+  String? _lastAudioKey;
+  String? _lastDurationsKey;
 
   bool get isRecording => _isRecording;
 
@@ -41,6 +45,21 @@ class AudioRecorderSectionState extends ConsumerState<AudioRecorderSection>
     WidgetsBinding.instance.addObserver(this);
     _audioPaths = List.from(widget.initialAudioPaths);
     _audioDurationsSec = List.from(widget.initialAudioDurationsSec);
+    _lastAudioKey = widget.initialAudioPaths.join(',');
+    _lastDurationsKey = widget.initialAudioDurationsSec.join(',');
+  }
+
+  @override
+  void didUpdateWidget(covariant AudioRecorderSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final newAudioKey = widget.initialAudioPaths.join(',');
+    final newDurationsKey = widget.initialAudioDurationsSec.join(',');
+    if (newAudioKey != _lastAudioKey || newDurationsKey != _lastDurationsKey) {
+      _audioPaths = List.from(widget.initialAudioPaths);
+      _audioDurationsSec = List.from(widget.initialAudioDurationsSec);
+      _lastAudioKey = newAudioKey;
+      _lastDurationsKey = newDurationsKey;
+    }
   }
 
   @override
@@ -102,6 +121,7 @@ class AudioRecorderSectionState extends ConsumerState<AudioRecorderSection>
           _isInitializing = false;
           _recordingDuration = Duration.zero;
         });
+        widget.onRecordingStateChanged?.call(true);
         _timer = Timer.periodic(const Duration(seconds: 1), (_) {
           if (mounted) {
             setState(() {
@@ -141,6 +161,7 @@ class AudioRecorderSectionState extends ConsumerState<AudioRecorderSection>
       setState(() {
         _isRecording = false;
       });
+      widget.onRecordingStateChanged?.call(false);
       if (path != null && mounted) {
         try {
           final savedPath = await FileStorage.saveAudioFile(path);
@@ -161,6 +182,7 @@ class AudioRecorderSectionState extends ConsumerState<AudioRecorderSection>
       setState(() {
         _isRecording = false;
       });
+      widget.onRecordingStateChanged?.call(false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('停止录音失败: $e')),

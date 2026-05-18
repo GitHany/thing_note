@@ -12,11 +12,14 @@ final recordRepositoryProvider = Provider<RecordRepository>((ref) {
 
 class RecordRepositoryImpl implements RecordRepository {
   final Ref _ref;
+  Database? _cachedDb;
 
   RecordRepositoryImpl(this._ref);
 
   Future<Database> get _db async {
-    return await _ref.read(databaseProvider.future);
+    if (_cachedDb != null) return _cachedDb!;
+    _cachedDb = await _ref.read(databaseProvider.future);
+    return _cachedDb!;
   }
 
   EpisodeRecord _fromMap(Map<String, dynamic> map) {
@@ -35,6 +38,8 @@ class RecordRepositoryImpl implements RecordRepository {
         jsonDecode(map['audio_durations_sec'] as String) as List,
       ),
       thingNameId: map['thing_name_id'] as int?,
+      annotationsJson: map['annotations'] as String?,
+      hasReminder: (map['has_reminder'] as int?) == 1,
       createdAt: DateTime.parse(map['created_at'] as String),
       updatedAt: DateTime.parse(map['updated_at'] as String),
     );
@@ -50,6 +55,8 @@ class RecordRepositoryImpl implements RecordRepository {
       'audio_paths': jsonEncode(record.audioPaths),
       'audio_durations_sec': jsonEncode(record.audioDurationsSec),
       'thing_name_id': record.thingNameId,
+      if (record.annotationsJson != null) 'annotations': record.annotationsJson,
+      'has_reminder': record.hasReminder ? 1 : 0,
       'created_at': record.createdAt.toIso8601String(),
       'updated_at': record.updatedAt.toIso8601String(),
     };
@@ -101,18 +108,16 @@ class RecordRepositoryImpl implements RecordRepository {
     final db = await _db;
     final record = await getById(id);
     if (record != null) {
-      for (final path in record.photoPaths) {
-        final file = File(path);
-        if (await file.exists()) {
-          await file.delete();
-        }
-      }
-      for (final path in record.audioPaths) {
-        final file = File(path);
-        if (await file.exists()) {
-          await file.delete();
-        }
-      }
+      await Future.wait([
+        ...record.photoPaths.map((path) async {
+          final file = File(path);
+          if (await file.exists()) await file.delete();
+        }),
+        ...record.audioPaths.map((path) async {
+          final file = File(path);
+          if (await file.exists()) await file.delete();
+        }),
+      ]);
     }
     await db.delete('episode_records', where: 'id = ?', whereArgs: [id]);
   }
@@ -121,28 +126,38 @@ class RecordRepositoryImpl implements RecordRepository {
   Future<void> deleteAll() async {
     final db = await _db;
     final records = await getAll();
-    for (final record in records) {
-      for (final path in record.photoPaths) {
-        final file = File(path);
-        if (await file.exists()) {
-          await file.delete();
-        }
-      }
-      for (final path in record.audioPaths) {
-        final file = File(path);
-        if (await file.exists()) {
-          await file.delete();
-        }
-      }
-    }
+    await Future.wait(
+      records.expand((record) => [
+        ...record.photoPaths.map((path) async {
+          final file = File(path);
+          if (await file.exists()) await file.delete();
+        }),
+        ...record.audioPaths.map((path) async {
+          final file = File(path);
+          if (await file.exists()) await file.delete();
+        }),
+      ]),
+    );
     await db.delete('episode_records');
   }
 
   @override
-  Stream<List<EpisodeRecord>> watchAll() async* {
-    while (true) {
-      yield await getAll();
-      await Future.delayed(const Duration(seconds: 1));
-    }
+  Future<List<EpisodeRecord>> getReminderRecords() async {
+    final db = await _db;
+    final maps = await db.query(
+      'episode_records',
+      where: 'has_reminder = 1',
+      orderBy: 'occurred_at DESC',
+    );
+    return maps.map(_fromMap).toList();
+  }
+
+  @override
+  Future<int> getReminderCount() async {
+    final db = await _db;
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM episode_records WHERE has_reminder = 1',
+    );
+    return Sqflite.firstIntValue(result) ?? 0;
   }
 }

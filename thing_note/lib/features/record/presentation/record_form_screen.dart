@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:thing_note/core/utils/file_storage.dart';
 import 'package:thing_note/features/media/presentation/widgets/photo_picker.dart';
 import 'package:thing_note/features/media/presentation/widgets/audio_recorder.dart';
@@ -10,6 +13,7 @@ import 'package:thing_note/features/record/presentation/widgets/timer_widget.dar
 import 'package:thing_note/features/record/presentation/widgets/note_input.dart';
 import 'package:thing_note/features/thing_name/domain/thing_name.dart';
 import 'package:thing_note/features/thing_name/presentation/providers/thing_name_provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class RecordFormScreen extends ConsumerStatefulWidget {
   final int? recordId;
@@ -32,12 +36,26 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
   bool _isLoading = false;
   bool _isChanged = false;
   final GlobalKey<AudioRecorderSectionState> _audioRecorderKey = GlobalKey();
+  bool _isRecording = false;
+  bool _hasReminder = false;
+  bool _isDataLoaded = true;
+  DateTime? _originalCreatedAt;
+
+  DateTime _initialOccurredAt = DateTime.now();
+  int _initialDurationSec = 0;
+  String _initialNote = '';
+  List<String> _initialPhotoPaths = [];
+  List<String> _initialAudioPaths = [];
+  List<int> _initialAudioDurationsSec = [];
+  int? _initialThingNameId;
+  bool _initialHasReminder = false;
 
   @override
   void initState() {
     super.initState();
     if (widget.recordId != null) {
       _isEditing = true;
+      _isDataLoaded = false;
       _loadRecord();
     }
     _noteController.addListener(_onNoteChanged);
@@ -48,39 +66,68 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
   }
 
   void _checkChanged() {
-    if (_isEditing) return;
+    if (!_isEditing) {
+      final hasData = _noteController.text.isNotEmpty ||
+          _durationSec > 0 ||
+          _photoPaths.isNotEmpty ||
+          _audioPaths.isNotEmpty ||
+          _thingNameId != null ||
+          _hasReminder;
 
-    final hasData = _noteController.text.isNotEmpty ||
-        _durationSec > 0 ||
-        _photoPaths.isNotEmpty ||
-        _audioPaths.isNotEmpty ||
-        _thingNameId != null;
+      if (hasData != _isChanged) {
+        setState(() => _isChanged = hasData);
+      }
+      return;
+    }
 
-    if (hasData != _isChanged) {
-      setState(() {
-        _isChanged = hasData;
-      });
+    final changed = _occurredAt != _initialOccurredAt ||
+        _durationSec != _initialDurationSec ||
+        _noteController.text != _initialNote ||
+        _thingNameId != _initialThingNameId ||
+        _hasReminder != _initialHasReminder ||
+        !_listEquals(_photoPaths, _initialPhotoPaths) ||
+        !_listEquals(_audioPaths, _initialAudioPaths) ||
+        !_intListEquals(_audioDurationsSec, _initialAudioDurationsSec);
+
+    if (changed != _isChanged) {
+      setState(() => _isChanged = changed);
     }
   }
 
+  bool _listEquals(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  bool _intListEquals(List<int> a, List<int> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
   Future<bool> _onWillPop() async {
-    if (!_isChanged && !_isEditing) {
+    if (!_isChanged) {
       return true;
     }
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('确认离开'),
-        content: const Text('您有未保存的更改，确定要离开吗？'),
+        title: Text(AppLocalizations.of(ctx)!.unsavedChanges),
+        content: Text(AppLocalizations.of(ctx)!.unsavedChangesDesc),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('取消'),
+            child: Text(AppLocalizations.of(ctx)!.keepEditing),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('离开'),
+            child: Text(AppLocalizations.of(ctx)!.discard),
           ),
         ],
       ),
@@ -90,17 +137,37 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
   }
 
   Future<void> _loadRecord() async {
-    final record = await ref.read(recordDetailProvider(widget.recordId!).future);
-    if (record != null && mounted) {
-      setState(() {
-        _occurredAt = record.occurredAt;
-        _durationSec = record.durationSec;
-        _noteController.text = record.note;
-        _photoPaths = List.from(record.photoPaths);
-        _audioPaths = List.from(record.audioPaths);
-        _audioDurationsSec = List.from(record.audioDurationsSec);
-        _thingNameId = record.thingNameId;
-      });
+    try {
+      final record = await ref.read(recordDetailProvider(widget.recordId!).future);
+      if (record != null && mounted) {
+        setState(() {
+          _occurredAt = record.occurredAt;
+          _durationSec = record.durationSec;
+          _noteController.text = record.note;
+          _photoPaths = List.from(record.photoPaths);
+          _audioPaths = List.from(record.audioPaths);
+          _audioDurationsSec = List.from(record.audioDurationsSec);
+          _thingNameId = record.thingNameId;
+          _hasReminder = record.hasReminder;
+          _originalCreatedAt = record.createdAt;
+          _initialOccurredAt = record.occurredAt;
+          _initialDurationSec = record.durationSec;
+          _initialNote = record.note;
+          _initialPhotoPaths = List.from(record.photoPaths);
+          _initialAudioPaths = List.from(record.audioPaths);
+          _initialAudioDurationsSec = List.from(record.audioDurationsSec);
+          _initialThingNameId = record.thingNameId;
+          _initialHasReminder = record.hasReminder;
+          _isDataLoaded = true;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context)!.loadFailed(e.toString()))),
+        );
+        Navigator.pop(context);
+      }
     }
   }
 
@@ -126,12 +193,13 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
       await _stopRecordingIfNeeded();
 
       final now = DateTime.now();
+      final appDirPath = (await FileStorage.appDocumentsDirectory).path;
 
-      List<String> savedPhotoPaths = [];
+      final List<String> savedPhotoPaths = [];
       for (final path in _photoPaths) {
         final file = File(path);
         if (await file.exists()) {
-          if (path.contains((await FileStorage.appDocumentsDirectory).path)) {
+          if (path.startsWith(appDirPath)) {
             savedPhotoPaths.add(path);
           } else {
             final savedPath = await FileStorage.savePhotoFile(path);
@@ -140,11 +208,11 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
         }
       }
 
-      List<String> savedAudioPaths = [];
+      final List<String> savedAudioPaths = [];
       for (final path in _audioPaths) {
         final file = File(path);
         if (await file.exists()) {
-          if (path.contains((await FileStorage.appDocumentsDirectory).path)) {
+          if (path.startsWith(appDirPath)) {
             savedAudioPaths.add(path);
           } else {
             final savedPath = await FileStorage.saveAudioFile(path);
@@ -154,7 +222,7 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
       }
 
       int? thingNameId = _thingNameId;
-      if (thingNameId == null) {
+      if (!_isEditing && thingNameId == null) {
         final defaultThingName = await ref.read(defaultThingNameProvider.future);
         thingNameId = defaultThingName?.id;
       }
@@ -168,23 +236,49 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
         audioPaths: savedAudioPaths,
         audioDurationsSec: _audioDurationsSec,
         thingNameId: thingNameId,
-        createdAt: _isEditing ? now : now,
+        hasReminder: _hasReminder,
+        createdAt: _originalCreatedAt ?? now,
         updatedAt: now,
       );
 
       if (_isEditing) {
         await ref.read(recordNotifierProvider.notifier).update(record);
+        ref.invalidate(recordDetailProvider(widget.recordId!));
       } else {
         await ref.read(recordNotifierProvider.notifier).create(record);
       }
 
       ref.invalidate(recordListProvider);
+      ref.invalidate(reminderCountProvider);
+      ref.invalidate(reminderRecordsProvider);
 
-      if (mounted) Navigator.pop(context);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: 1),
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.elasticOut,
+                  builder: (context, value, child) {
+                    return Transform.scale(scale: value, child: child);
+                  },
+                  child: const Icon(Icons.check_circle, color: Colors.green),
+                ),
+                const SizedBox(width: 8),
+                Text(AppLocalizations.of(context)!.save),
+              ],
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        Navigator.pop(context);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('保存失败: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.saveFailed(e.toString()))),
         );
       }
     } finally {
@@ -196,6 +290,15 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
   Widget build(BuildContext context) {
     final thingNamesAsync = ref.watch(thingNameListProvider);
 
+    if (!_isDataLoaded) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(AppLocalizations.of(context)!.editRecord),
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
@@ -206,7 +309,16 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(_isEditing ? '编辑记录' : '新建记录'),
+          title: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(_isEditing ? AppLocalizations.of(context)!.editRecord : AppLocalizations.of(context)!.newRecord),
+              if (_isRecording) ...[
+                const SizedBox(width: 8),
+                const _PulseIndicator(color: Colors.red),
+              ],
+            ],
+          ),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () async {
@@ -224,7 +336,7 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
                       height: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('保存'),
+                  : Text(AppLocalizations.of(context)!.save),
             ),
             const SizedBox(width: 8),
           ],
@@ -237,40 +349,39 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.calendar_today),
-                title: const Text('发生时间'),
+                title: Text(AppLocalizations.of(context)!.occurredAt),
                 subtitle: Text(
-                  '${_occurredAt.year}年${_occurredAt.month}月${_occurredAt.day}日 ${_occurredAt.hour.toString().padLeft(2, '0')}:${_occurredAt.minute.toString().padLeft(2, '0')}',
+                  DateFormat('yyyy-MM-dd HH:mm').format(_occurredAt),
                 ),
                 onTap: () => _pickDateTime(),
               ),
               const SizedBox(height: 8),
               thingNamesAsync.when(
-                loading: () => const ListTile(
+                loading: () => ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: Icon(Icons.category),
-                  title: Text('事件名称'),
-                  subtitle: Text('加载中...'),
+                  leading: const Icon(Icons.category),
+                  title: Text(AppLocalizations.of(context)!.thingName),
+                  subtitle: Text(AppLocalizations.of(context)!.loading),
                 ),
                 error: (error, stack) => ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.category),
-                  title: const Text('事件名称'),
-                  subtitle: Text('加载失败: $error'),
+                  title: Text(AppLocalizations.of(context)!.thingName),
+                  subtitle: Text(AppLocalizations.of(context)!.loadFailed(error.toString())),
                 ),
                 data: (thingNames) {
                   ThingName? selectedName;
-                  try {
-                    selectedName = thingNames.firstWhere(
-                      (name) => name.id == _thingNameId,
-                    );
-                  } catch (_) {
-                    selectedName = null;
+                  for (final name in thingNames) {
+                    if (name.id == _thingNameId) {
+                      selectedName = name;
+                      break;
+                    }
                   }
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.category),
-                    title: const Text('事件名称'),
-                    subtitle: Text(selectedName?.name ?? '请选择'),
+                    title: Text(AppLocalizations.of(context)!.thingName),
+                    subtitle: Text(selectedName?.name ?? AppLocalizations.of(context)!.pleaseSelect),
                     onTap: () => _showThingNamePicker(thingNames),
                   );
                 },
@@ -284,7 +395,16 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              NoteInput(controller: _noteController),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                secondary: const Icon(Icons.alarm),
+                title: Text(AppLocalizations.of(context)!.reminder),
+                value: _hasReminder,
+                onChanged: (value) {
+                  setState(() => _hasReminder = value);
+                  _checkChanged();
+                },
+              ),
               const SizedBox(height: 16),
               PhotoPickerSection(
                 initialPaths: _photoPaths,
@@ -305,7 +425,12 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
                   });
                   _checkChanged();
                 },
+                onRecordingStateChanged: (isRecording) {
+                  setState(() => _isRecording = isRecording);
+                },
               ),
+              const SizedBox(height: 16),
+              NoteInput(controller: _noteController),
             ],
           ),
         ),
@@ -322,10 +447,7 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
     );
     if (date == null || !mounted) return;
 
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(_occurredAt),
-    );
+    final time = await _showCupertinoTimePicker(_occurredAt);
     if (time == null || !mounted) return;
 
     setState(() {
@@ -337,6 +459,50 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
         time.minute,
       );
     });
+    _checkChanged();
+  }
+
+  Future<TimeOfDay?> _showCupertinoTimePicker(DateTime initialTime) async {
+    TimeOfDay? selectedTime = TimeOfDay.fromDateTime(initialTime);
+
+    final result = await showModalBottomSheet<TimeOfDay>(
+      context: context,
+      builder: (ctx) {
+        return Container(
+          height: 260,
+          color: CupertinoColors.systemBackground.resolveFrom(ctx),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  CupertinoButton(
+                    child: Text(AppLocalizations.of(ctx)!.cancel),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                  CupertinoButton(
+                    child: Text(AppLocalizations.of(ctx)!.confirm),
+                    onPressed: () => Navigator.pop(ctx, selectedTime),
+                  ),
+                ],
+              ),
+              Expanded(
+                child: CupertinoDatePicker(
+                  mode: CupertinoDatePickerMode.time,
+                  use24hFormat: true,
+                  initialDateTime: initialTime,
+                  onDateTimeChanged: (dateTime) {
+                    selectedTime = TimeOfDay.fromDateTime(dateTime);
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    return result;
   }
 
   Future<void> _showThingNamePicker(List<ThingName> thingNames) async {
@@ -348,7 +514,7 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
         return Dialog.fullscreen(
           child: Scaffold(
             appBar: AppBar(
-              title: const Text('选择事件名称'),
+              title: Text(AppLocalizations.of(dialogContext)!.selectThingName),
               leading: IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: () => Navigator.pop(dialogContext),
@@ -368,7 +534,7 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
                       child: TextField(
                         autofocus: true,
                         decoration: InputDecoration(
-                          hintText: '搜索事件名称',
+                          hintText: AppLocalizations.of(context)!.searchThingName,
                           prefixIcon: const Icon(Icons.search),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -385,7 +551,7 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
                     ),
                     ListTile(
                       leading: const Icon(Icons.block),
-                      title: const Text('不选择'),
+                      title: Text(AppLocalizations.of(context)!.doNotSelect),
                       onTap: () => Navigator.pop(dialogContext, null),
                     ),
                     const Divider(height: 1),
@@ -393,7 +559,7 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
                       child: filtered.isEmpty
                           ? Center(
                               child: Text(
-                                '无匹配结果',
+                                AppLocalizations.of(context)!.noMatchResult,
                                 style: Theme.of(context)
                                     .textTheme
                                     .bodyMedium
@@ -429,5 +595,48 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
       setState(() => _thingNameId = result);
       _checkChanged();
     }
+  }
+}
+
+class _PulseIndicator extends StatefulWidget {
+  final Color color;
+  const _PulseIndicator({required this.color});
+
+  @override
+  State<_PulseIndicator> createState() => _PulseIndicatorState();
+}
+
+class _PulseIndicatorState extends State<_PulseIndicator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: Tween<double>(begin: 1.0, end: 1.3).animate(_controller),
+      child: Container(
+        width: 12,
+        height: 12,
+        decoration: BoxDecoration(
+          color: widget.color,
+          shape: BoxShape.circle,
+        ),
+      ),
+    );
   }
 }

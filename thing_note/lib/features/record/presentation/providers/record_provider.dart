@@ -8,6 +8,16 @@ final recordListProvider = FutureProvider<List<EpisodeRecord>>((ref) async {
   return repo.getAll();
 });
 
+final reminderCountProvider = FutureProvider<int>((ref) async {
+  final repo = ref.watch(recordRepositoryProvider);
+  return repo.getReminderCount();
+});
+
+final reminderRecordsProvider = FutureProvider<List<EpisodeRecord>>((ref) async {
+  final repo = ref.watch(recordRepositoryProvider);
+  return repo.getReminderRecords();
+});
+
 final recordDetailProvider =
     FutureProvider.family<EpisodeRecord?, int>((ref, id) {
   final repo = ref.watch(recordRepositoryProvider);
@@ -19,14 +29,18 @@ class RecordNotifier extends StateNotifier<AsyncValue<void>> {
 
   RecordNotifier(this._repo) : super(const AsyncValue.data(null));
 
-  Future<void> create(EpisodeRecord record) async {
+  Future<EpisodeRecord> create(EpisodeRecord record) async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => _repo.create(record));
+    final created = await _repo.create(record);
+    state = const AsyncValue.data(null);
+    return created;
   }
 
-  Future<void> update(EpisodeRecord record) async {
+  Future<EpisodeRecord> update(EpisodeRecord record) async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => _repo.update(record));
+    final updated = await _repo.update(record);
+    state = const AsyncValue.data(null);
+    return updated;
   }
 
   Future<void> delete(int id) async {

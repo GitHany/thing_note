@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:thing_note/core/utils/duration_formatter.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class TimerWidget extends StatefulWidget {
   final Duration initialDuration;
@@ -25,6 +27,14 @@ class _TimerWidgetState extends State<TimerWidget> {
   void initState() {
     super.initState();
     _duration = widget.initialDuration;
+  }
+
+  @override
+  void didUpdateWidget(covariant TimerWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialDuration != oldWidget.initialDuration) {
+      _duration = widget.initialDuration;
+    }
   }
 
   @override
@@ -58,20 +68,25 @@ class _TimerWidgetState extends State<TimerWidget> {
   }
 
   Future<void> _showDurationPicker() async {
-    final result = await showDialog<Duration>(
+    await showModalBottomSheet(
       context: context,
-      builder: (context) => _DurationPickerDialog(initialDuration: _duration),
+      builder: (ctx) => _CupertinoDurationPicker(
+        initialDuration: _duration,
+        onConfirm: (result) {
+          if (result != null && mounted) {
+            setState(() {
+              _duration = result;
+            });
+            widget.onDurationChanged(_duration);
+          }
+        },
+      ),
     );
-    if (result != null && mounted) {
-      setState(() {
-        _duration = result;
-      });
-      widget.onDurationChanged(_duration);
-    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -95,7 +110,7 @@ class _TimerWidgetState extends State<TimerWidget> {
             ),
             const SizedBox(height: 8),
             Text(
-              '点击可手动修改时间',
+              l10n.duration,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -108,19 +123,19 @@ class _TimerWidgetState extends State<TimerWidget> {
                   FilledButton.icon(
                     onPressed: _start,
                     icon: const Icon(Icons.play_arrow),
-                    label: const Text('开始'),
+                    label: Text(l10n.startTimer),
                   )
                 else
                   FilledButton.icon(
                     onPressed: _pause,
                     icon: const Icon(Icons.pause),
-                    label: const Text('暂停'),
+                    label: Text(l10n.pause),
                   ),
                 const SizedBox(width: 12),
                 OutlinedButton.icon(
                   onPressed: _duration > Duration.zero ? _finish : null,
                   icon: const Icon(Icons.check),
-                  label: const Text('完成'),
+                  label: Text(l10n.done),
                 ),
               ],
             ),
@@ -131,130 +146,68 @@ class _TimerWidgetState extends State<TimerWidget> {
   }
 }
 
-class _DurationPickerDialog extends StatefulWidget {
+class _CupertinoDurationPicker extends StatefulWidget {
   final Duration initialDuration;
+  final ValueChanged<Duration?> onConfirm;
 
-  const _DurationPickerDialog({required this.initialDuration});
+  const _CupertinoDurationPicker({
+    required this.initialDuration,
+    required this.onConfirm,
+  });
 
   @override
-  State<_DurationPickerDialog> createState() => _DurationPickerDialogState();
+  State<_CupertinoDurationPicker> createState() => _CupertinoDurationPickerState();
 }
 
-class _DurationPickerDialogState extends State<_DurationPickerDialog> {
-  late final TextEditingController _hoursController;
-  late final TextEditingController _minutesController;
-  late final TextEditingController _secondsController;
+class _CupertinoDurationPickerState extends State<_CupertinoDurationPicker> {
+  late Duration _selectedDuration;
 
   @override
   void initState() {
     super.initState();
-    _hoursController = TextEditingController(
-      text: widget.initialDuration.inHours.toString(),
-    );
-    _minutesController = TextEditingController(
-      text: widget.initialDuration.inMinutes.remainder(60).toString(),
-    );
-    _secondsController = TextEditingController(
-      text: widget.initialDuration.inSeconds.remainder(60).toString(),
-    );
-  }
-
-  @override
-  void dispose() {
-    _hoursController.dispose();
-    _minutesController.dispose();
-    _secondsController.dispose();
-    super.dispose();
-  }
-
-  void _confirm() {
-    final hours = int.tryParse(_hoursController.text) ?? 0;
-    final minutes = int.tryParse(_minutesController.text) ?? 0;
-    final seconds = int.tryParse(_secondsController.text) ?? 0;
-    final duration = Duration(
-      hours: hours,
-      minutes: minutes,
-      seconds: seconds,
-    );
-    Navigator.pop(context, duration);
+    _selectedDuration = widget.initialDuration;
   }
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('设置时间'),
-      content: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+    final l10n = AppLocalizations.of(context)!;
+    return Container(
+      height: 300,
+      color: CupertinoColors.systemBackground.resolveFrom(context),
+      child: Column(
         children: [
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('小时'),
-                TextField(
-                  controller: _hoursController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: false, signed: false),
-                  textAlign: TextAlign.center,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(vertical: 8),
-                  ),
-                ),
-              ],
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              CupertinoButton(
+                child: Text(l10n.cancel),
+                onPressed: () {
+                  widget.onConfirm(null);
+                  Navigator.pop(context);
+                },
+              ),
+              CupertinoButton(
+                child: Text(l10n.confirm),
+                onPressed: () {
+                  widget.onConfirm(_selectedDuration);
+                  Navigator.pop(context);
+                },
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          const Text(':', style: TextStyle(fontSize: 24)),
-          const SizedBox(width: 8),
           Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('分钟'),
-                TextField(
-                  controller: _minutesController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: false, signed: false),
-                  textAlign: TextAlign.center,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(vertical: 8),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          const Text(':', style: TextStyle(fontSize: 24)),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('秒'),
-                TextField(
-                  controller: _secondsController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: false, signed: false),
-                  textAlign: TextAlign.center,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(vertical: 8),
-                  ),
-                ),
-              ],
+            child: CupertinoTimerPicker(
+              mode: CupertinoTimerPickerMode.hms,
+              initialTimerDuration: _selectedDuration,
+              onTimerDurationChanged: (Duration duration) {
+                setState(() {
+                  _selectedDuration = duration;
+                });
+              },
             ),
           ),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('取消'),
-        ),
-        FilledButton(
-          onPressed: _confirm,
-          child: const Text('确定'),
-        ),
-      ],
     );
   }
 }

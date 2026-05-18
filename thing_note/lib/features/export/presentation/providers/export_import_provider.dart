@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:thing_note/features/record/domain/episode_record.dart';
 import 'package:thing_note/features/export/data/zip_exporter.dart';
+import 'package:thing_note/features/thing_name/domain/thing_name.dart';
 
 class ExportImportState {
   final double progress;
@@ -40,7 +41,7 @@ class ExportImportNotifier extends StateNotifier<ExportImportState> {
 
   Future<File?> exportRecords({
     required List<EpisodeRecord> records,
-    required List<String> thingNames,
+    required List<ThingName> thingNames,
   }) async {
     if (state.isExporting || state.isImporting) return null;
 

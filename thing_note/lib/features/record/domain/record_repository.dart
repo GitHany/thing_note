@@ -7,5 +7,6 @@ abstract class RecordRepository {
   Future<EpisodeRecord> update(EpisodeRecord record);
   Future<void> delete(int id);
   Future<void> deleteAll();
-  Stream<List<EpisodeRecord>> watchAll();
+  Future<List<EpisodeRecord>> getReminderRecords();
+  Future<int> getReminderCount();
 }

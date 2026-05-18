@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:thing_note/features/media/presentation/providers/media_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class PhotoPickerSection extends ConsumerStatefulWidget {
   final List<String> initialPaths;
@@ -19,11 +20,23 @@ class PhotoPickerSection extends ConsumerStatefulWidget {
 
 class _PhotoPickerSectionState extends ConsumerState<PhotoPickerSection> {
   late List<String> _paths;
+  String? _lastInitPathsKey;
 
   @override
   void initState() {
     super.initState();
     _paths = List.from(widget.initialPaths);
+    _lastInitPathsKey = widget.initialPaths.join(',');
+  }
+
+  @override
+  void didUpdateWidget(covariant PhotoPickerSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final newKey = widget.initialPaths.join(',');
+    if (newKey != _lastInitPathsKey) {
+      _paths = List.from(widget.initialPaths);
+      _lastInitPathsKey = newKey;
+    }
   }
 
   Future<void> _pickFromGallery() async {
@@ -40,7 +53,7 @@ class _PhotoPickerSectionState extends ConsumerState<PhotoPickerSection> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('选择图片失败: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.pickFromGalleryFailed(e.toString()))),
         );
       }
     }
@@ -58,7 +71,7 @@ class _PhotoPickerSectionState extends ConsumerState<PhotoPickerSection> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('拍照失败: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.takePhotoFailed(e.toString()))),
         );
       }
     }
@@ -77,7 +90,7 @@ class _PhotoPickerSectionState extends ConsumerState<PhotoPickerSection> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '照片',
+          AppLocalizations.of(context)!.photos,
           style: Theme.of(context).textTheme.titleSmall,
         ),
         const SizedBox(height: 8),
@@ -95,12 +108,12 @@ class _PhotoPickerSectionState extends ConsumerState<PhotoPickerSection> {
             }),
             _AddPhotoButton(
               icon: Icons.photo_library,
-              label: '相册',
+              label: AppLocalizations.of(context)!.gallery,
               onTap: _pickFromGallery,
             ),
             _AddPhotoButton(
               icon: Icons.camera_alt,
-              label: '拍照',
+              label: AppLocalizations.of(context)!.takePhoto,
               onTap: _pickFromCamera,
             ),
           ],

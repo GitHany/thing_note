@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:thing_note/features/thing_name/domain/thing_name.dart';
 import 'package:thing_note/features/thing_name/presentation/providers/thing_name_provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ThingNameManageScreen extends ConsumerStatefulWidget {
   const ThingNameManageScreen({super.key});
@@ -30,16 +31,16 @@ class _ThingNameManageScreenState extends ConsumerState<ThingNameManageScreen> {
     await showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('添加事件名称'),
+        title: Text(AppLocalizations.of(ctx)!.addThingName),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: _nameController,
               autofocus: true,
-              decoration: const InputDecoration(
-                labelText: '名称',
-                hintText: '请输入事件名称',
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(ctx)!.name,
+                hintText: AppLocalizations.of(ctx)!.pleaseEnterThingName,
               ),
             ),
             const SizedBox(height: 12),
@@ -47,9 +48,9 @@ class _ThingNameManageScreenState extends ConsumerState<ThingNameManageScreen> {
               controller: _remarkController,
               maxLines: 3,
               minLines: 1,
-              decoration: const InputDecoration(
-                labelText: '备注',
-                hintText: '请输入备注（可选）',
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(ctx)!.remark,
+                hintText: AppLocalizations.of(ctx)!.pleaseEnterRemark,
               ),
             ),
           ],
@@ -57,15 +58,15 @@ class _ThingNameManageScreenState extends ConsumerState<ThingNameManageScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('取消'),
+            child: Text(AppLocalizations.of(ctx)!.cancel),
           ),
           TextButton(
             onPressed: () {
               final name = _nameController.text.trim();
               if (name.isEmpty) return;
-              if (name == '默认') {
+              if (name == AppLocalizations.of(context)!.defaultThingName) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('不能创建名为"默认"的事件名称')),
+                  SnackBar(content: Text(AppLocalizations.of(context)!.cannotCreateDefaultName)),
                 );
                 return;
               }
@@ -75,7 +76,7 @@ class _ThingNameManageScreenState extends ConsumerState<ThingNameManageScreen> {
               );
               if (isDuplicate) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('事件名称"$name"已存在，请使用其他名称')),
+                  SnackBar(content: Text(AppLocalizations.of(context)!.thingNameAlreadyExists(name))),
                 );
                 return;
               }
@@ -87,7 +88,7 @@ class _ThingNameManageScreenState extends ConsumerState<ThingNameManageScreen> {
               );
               Navigator.pop(ctx);
             },
-            child: const Text('添加'),
+            child: Text(AppLocalizations.of(ctx)!.add),
           ),
         ],
       ),
@@ -120,13 +121,13 @@ class _ThingNameManageScreenState extends ConsumerState<ThingNameManageScreen> {
 
   Future<void> _deleteSelected() async {
     final defaultId = ref.read(thingNameListProvider).valueOrNull
-        ?.firstWhere((tn) => tn.name == '默认', orElse: () => ThingName(name: '', createdAt: DateTime.now()))
+        ?.firstWhere((tn) => tn.name == AppLocalizations.of(context)!.defaultThingName, orElse: () => ThingName(name: '', createdAt: DateTime.now()))
         .id;
     final idsToDelete = _selectedIds.where((id) => id != defaultId).toList();
     
     if (idsToDelete.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('默认事件名称不能被删除')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.defaultThingNameCannotDelete)),
       );
       return;
     }
@@ -134,17 +135,17 @@ class _ThingNameManageScreenState extends ConsumerState<ThingNameManageScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('确认删除'),
-        content: Text('确定要删除选中的 ${idsToDelete.length} 个事件名称吗？\n\n相关的记录不会被删除，但它们的事件名称会被移除。'),
+        title: Text(AppLocalizations.of(ctx)!.confirmDelete),
+        content: Text(AppLocalizations.of(ctx)!.confirmDeleteSelectedThingNames(idsToDelete.length)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('取消'),
+            child: Text(AppLocalizations.of(ctx)!.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(
-              '删除',
+              AppLocalizations.of(ctx)!.delete,
               style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           ),
@@ -170,8 +171,8 @@ class _ThingNameManageScreenState extends ConsumerState<ThingNameManageScreen> {
     return Scaffold(
       appBar: AppBar(
         title: _isMultiSelectMode
-            ? Text('已选择 ${_selectedIds.length} 个')
-            : const Text('事件名称管理'),
+            ? Text(AppLocalizations.of(context)!.selectedCount(_selectedIds.length))
+            : Text(AppLocalizations.of(context)!.thingNameManage),
         leading: _isMultiSelectMode
             ? IconButton(
                 icon: const Icon(Icons.close),
@@ -193,12 +194,12 @@ class _ThingNameManageScreenState extends ConsumerState<ThingNameManageScreen> {
                           : Icons.check_box_outline_blank,
                     ),
                     onPressed: () => _selectAll(thingNames.map((t) => t.id!).toList()),
-                    tooltip: '全选',
+                    tooltip: AppLocalizations.of(context)!.selectAll,
                   ),
                   IconButton(
                     icon: const Icon(Icons.delete),
                     onPressed: _selectedIds.isEmpty ? null : _deleteSelected,
-                    tooltip: '删除',
+                    tooltip: AppLocalizations.of(context)!.delete,
                   ),
                 ],
                 loading: () => [],
@@ -208,7 +209,7 @@ class _ThingNameManageScreenState extends ConsumerState<ThingNameManageScreen> {
       ),
       body: thingNamesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('加载失败: $err')),
+        error: (err, _) => Center(child: Text(AppLocalizations.of(context)!.loadFailed(err.toString()))),
         data: (thingNames) {
           if (thingNames.isEmpty) {
             return Center(
@@ -222,14 +223,14 @@ class _ThingNameManageScreenState extends ConsumerState<ThingNameManageScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    '暂无事件名称',
+                    AppLocalizations.of(context)!.noThingNames,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           color: Theme.of(context).colorScheme.outline,
                         ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '点击右下角按钮添加',
+                    AppLocalizations.of(context)!.tapToAddThingName,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.outline,
                         ),

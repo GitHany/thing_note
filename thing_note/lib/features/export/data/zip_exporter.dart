@@ -3,15 +3,18 @@ import 'dart:convert';
 import 'package:archive/archive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:thing_note/features/record/domain/episode_record.dart';
+import 'package:thing_note/features/thing_name/domain/thing_name.dart';
 
 class ZipExporter {
   static Future<File> exportRecords({
     required List<EpisodeRecord> records,
-    required List<String> thingNames,
+    required List<ThingName> thingNames,
     void Function(int current, int total)? onProgress,
   }) async {
     final archive = Archive();
     final total = records.length;
+
+    final thingNameMap = {for (final tn in thingNames) tn.id: tn.name};
 
     for (int i = 0; i < records.length; i++) {
       final record = records[i];
@@ -22,9 +25,13 @@ class ZipExporter {
       infoBuffer.writeln('发生时间: ${record.occurredAt.toIso8601String()}');
       infoBuffer.writeln('持续时长: ${record.durationSec}秒');
       infoBuffer.writeln('备注: ${record.note}');
-      infoBuffer.writeln('事件名称ID: ${record.thingNameId ?? "无"}');
+      infoBuffer.writeln('事件名称: ${thingNameMap[record.thingNameId] ?? "无"}');
       infoBuffer.writeln('创建时间: ${record.createdAt.toIso8601String()}');
       infoBuffer.writeln('更新时间: ${record.updatedAt.toIso8601String()}');
+
+      if (record.audioDurationsSec.isNotEmpty) {
+        infoBuffer.writeln('音频时长(秒): ${record.audioDurationsSec.join(",")}');
+      }
 
       final infoData = utf8.encode(infoBuffer.toString());
       archive.addFile(ArchiveFile('$folderName/info.txt', infoData.length, infoData));

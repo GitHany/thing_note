@@ -8,7 +8,7 @@ final databaseProvider = FutureProvider<Database>((ref) async {
 
   return openDatabase(
     path,
-    version: 4,
+    version: 8,
     onCreate: (db, version) async {
       await db.execute('''
         CREATE TABLE episode_records (
@@ -20,8 +20,10 @@ final databaseProvider = FutureProvider<Database>((ref) async {
           audio_paths TEXT NOT NULL DEFAULT '[]',
           audio_durations_sec TEXT NOT NULL DEFAULT '[]',
           thing_name_id INTEGER,
+          annotations TEXT,
           created_at TEXT NOT NULL,
-          updated_at TEXT NOT NULL
+          updated_at TEXT NOT NULL,
+          has_reminder INTEGER NOT NULL DEFAULT 0
         )
       ''');
 
@@ -39,6 +41,18 @@ final databaseProvider = FutureProvider<Database>((ref) async {
         'remark': '未选择事件名称的记录将归类到此处',
         'created_at': DateTime.now().toIso8601String(),
       });
+
+      await db.execute('''
+        CREATE TABLE reminders (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          record_id INTEGER NOT NULL,
+          remind_at TEXT NOT NULL,
+          is_triggered INTEGER NOT NULL DEFAULT 0,
+          calendar_event_id TEXT,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (record_id) REFERENCES episode_records(id) ON DELETE CASCADE
+        )
+      ''');
     },
     onUpgrade: (db, oldVersion, newVersion) async {
       if (oldVersion < 2) {
@@ -115,6 +129,43 @@ final databaseProvider = FutureProvider<Database>((ref) async {
         try {
           await db.execute(
               'ALTER TABLE episode_records DROP COLUMN audio_duration_sec');
+        } catch (_) {}
+      }
+
+      if (oldVersion < 5) {
+        try {
+          await db.execute(
+              'ALTER TABLE episode_records ADD COLUMN annotations TEXT');
+        } catch (_) {}
+      }
+
+      if (oldVersion < 6) {
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS reminders (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            record_id INTEGER NOT NULL,
+            remind_at TEXT NOT NULL,
+            is_triggered INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (record_id) REFERENCES episode_records(id) ON DELETE CASCADE
+          )
+        ''');
+      }
+
+      if (oldVersion < 7) {
+        try {
+          await db.execute(
+              'ALTER TABLE reminders ADD COLUMN calendar_event_id TEXT');
+        } catch (_) {}
+      }
+
+      if (oldVersion < 8) {
+        try {
+          await db.execute(
+              'ALTER TABLE episode_records ADD COLUMN has_reminder INTEGER NOT NULL DEFAULT 0');
+        } catch (_) {}
+        try {
+          await db.execute('DROP TABLE IF EXISTS reminders');
         } catch (_) {}
       }
     },

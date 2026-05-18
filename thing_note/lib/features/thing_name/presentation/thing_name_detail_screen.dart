@@ -8,6 +8,7 @@ import 'package:thing_note/features/record/presentation/providers/record_provide
 import 'package:thing_note/features/record/presentation/widgets/record_card.dart';
 import 'package:thing_note/features/thing_name/domain/thing_name.dart';
 import 'package:thing_note/features/thing_name/presentation/providers/thing_name_provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ThingNameDetailScreen extends ConsumerStatefulWidget {
   final int thingNameId;
@@ -30,9 +31,9 @@ class _ThingNameDetailScreenState extends ConsumerState<ThingNameDetailScreen> {
   }
 
   Future<void> _showEditDialog(ThingName thingName) async {
-    if (thingName.name == '默认') {
+    if (thingName.name == AppLocalizations.of(context)!.defaultThingName) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('默认事件名称不能被修改')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.defaultNameProtected)),
       );
       return;
     }
@@ -42,26 +43,26 @@ class _ThingNameDetailScreenState extends ConsumerState<ThingNameDetailScreen> {
     await showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('编辑事件名称'),
+        title: Text(AppLocalizations.of(ctx)!.editThingName),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: _nameController,
-              decoration: const InputDecoration(labelText: '名称'),
+              decoration: InputDecoration(labelText: AppLocalizations.of(ctx)!.name),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _remarkController,
               maxLines: 3,
-              decoration: const InputDecoration(labelText: '备注'),
+              decoration: InputDecoration(labelText: AppLocalizations.of(ctx)!.remark),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('取消'),
+            child: Text(AppLocalizations.of(ctx)!.cancel),
           ),
           TextButton(
             onPressed: () {
@@ -75,7 +76,7 @@ class _ThingNameDetailScreenState extends ConsumerState<ThingNameDetailScreen> {
               );
               Navigator.pop(ctx);
             },
-            child: const Text('保存'),
+            child: Text(AppLocalizations.of(ctx)!.save),
           ),
         ],
       ),
@@ -83,9 +84,9 @@ class _ThingNameDetailScreenState extends ConsumerState<ThingNameDetailScreen> {
   }
 
   Future<void> _deleteThingName(ThingName thingName) async {
-    if (thingName.name == '默认') {
+    if (thingName.name == AppLocalizations.of(context)!.defaultThingName) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('默认事件名称不能被删除')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.defaultThingNameCannotDelete)),
       );
       return;
     }
@@ -93,17 +94,17 @@ class _ThingNameDetailScreenState extends ConsumerState<ThingNameDetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('确认删除'),
-        content: const Text('确定要删除这个事件名称吗？\n\n相关的记录不会被删除，但它们的事件名称会被移除。'),
+        title: Text(AppLocalizations.of(ctx)!.confirmDelete),
+        content: Text(AppLocalizations.of(ctx)!.confirmDeleteThingName),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('取消'),
+            child: Text(AppLocalizations.of(ctx)!.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(
-              '删除',
+              AppLocalizations.of(ctx)!.delete,
               style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           ),
@@ -119,19 +120,19 @@ class _ThingNameDetailScreenState extends ConsumerState<ThingNameDetailScreen> {
     }
   }
 
-  Future<void> _exportRecords(List<EpisodeRecord> records, List<String> thingNames) async {
+  Future<void> _exportRecords(List<EpisodeRecord> records, List<ThingName> thingNames) async {
     try {
       final zipFile = await ZipExporter.exportRecords(
         records: records,
         thingNames: thingNames,
       );
       if (mounted) {
-        await Share.shareXFiles([XFile(zipFile.path)], text: '分享 ${records.length} 条记录');
+        await Share.shareXFiles([XFile(zipFile.path)], text: AppLocalizations.of(context)!.shareRecords(records.length));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('导出失败: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.exportFailed(e.toString()))),
         );
       }
     }
@@ -146,17 +147,17 @@ class _ThingNameDetailScreenState extends ConsumerState<ThingNameDetailScreen> {
     return thingNameAsync.when(
       loading: () => Scaffold(
         appBar: AppBar(),
-        body: Center(child: CircularProgressIndicator()),
+        body: const Center(child: CircularProgressIndicator()),
       ),
       error: (err, stack) => Scaffold(
         appBar: AppBar(),
-        body: Center(child: Text('加载失败: $err')),
+        body: Center(child: Text(AppLocalizations.of(context)!.loadFailed(err.toString()))),
       ),
       data: (thingName) {
         if (thingName == null) {
           return Scaffold(
             appBar: AppBar(),
-            body: Center(child: Text('事件名称不存在')),
+            body: Center(child: Text(AppLocalizations.of(context)!.thingNameNotExist)),
           );
         }
 
@@ -164,7 +165,7 @@ class _ThingNameDetailScreenState extends ConsumerState<ThingNameDetailScreen> {
                 ?.where((r) => r.thingNameId == widget.thingNameId)
                 .toList() ??
             [];
-        final thingNames = allThingNamesAsync.valueOrNull?.map((tn) => tn.name).toList() ?? [];
+        final thingNames = allThingNamesAsync.valueOrNull ?? [];
 
         return Scaffold(
           appBar: AppBar(
@@ -173,21 +174,21 @@ class _ThingNameDetailScreenState extends ConsumerState<ThingNameDetailScreen> {
               IconButton(
                 icon: const Icon(Icons.share),
                 onPressed: records.isEmpty ? null : () => _exportRecords(records, thingNames),
-                tooltip: '分享',
+                tooltip: AppLocalizations.of(context)!.share,
               ),
               PopupMenuButton(
                 itemBuilder: (ctx) => [
                   PopupMenuItem(
-                    child: const ListTile(
-                      leading: Icon(Icons.edit),
-                      title: Text('编辑'),
+                    child: ListTile(
+                      leading: const Icon(Icons.edit),
+                      title: Text(AppLocalizations.of(context)!.edit),
                     ),
                     onTap: () => _showEditDialog(thingName),
                   ),
                   PopupMenuItem(
                     child: ListTile(
                       leading: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
-                      title: Text('删除', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                      title: Text(AppLocalizations.of(context)!.delete, style: TextStyle(color: Theme.of(context).colorScheme.error)),
                     ),
                     onTap: () => _deleteThingName(thingName),
                   ),
@@ -211,7 +212,7 @@ class _ThingNameDetailScreenState extends ConsumerState<ThingNameDetailScreen> {
                   ),
                 const SizedBox(height: 16),
                 Text(
-                  '相关记录 (${records.length})',
+                  '${AppLocalizations.of(context)!.relatedRecords} (${records.length})',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
@@ -220,7 +221,7 @@ class _ThingNameDetailScreenState extends ConsumerState<ThingNameDetailScreen> {
                     child: Padding(
                       padding: const EdgeInsets.all(32),
                       child: Text(
-                        '暂无相关记录',
+                        AppLocalizations.of(context)!.noRelatedRecords,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: Theme.of(context).colorScheme.outline,
                             ),

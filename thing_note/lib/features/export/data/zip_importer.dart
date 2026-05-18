@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
 import 'package:archive/archive.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:thing_note/core/utils/file_storage.dart';
 import 'package:thing_note/features/record/domain/episode_record.dart';
 
@@ -108,7 +107,6 @@ class ZipImporter {
 
     final List<String> photoPaths = [];
     final List<String> audioPaths = [];
-    final List<int> audioDurationsSec = [];
 
     final photosDir = '$folderPath/photos/';
     final audiosDir = '$folderPath/audios/';
@@ -150,8 +148,6 @@ class ZipImporter {
 
     final List<String> savedPhotoPaths = [];
     final List<String> savedAudioPaths = [];
-
-    final folderPath = 'record_${recordData.id}_${recordData.occurredAt.toIso8601String().replaceAll(':', '-')}';
 
     for (int i = 0; i < recordData.photoPaths.length; i++) {
       final relativePath = recordData.photoPaths[i];

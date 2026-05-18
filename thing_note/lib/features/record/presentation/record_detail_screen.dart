@@ -9,6 +9,7 @@ import 'package:thing_note/features/record/domain/episode_record.dart';
 import 'package:thing_note/features/record/presentation/providers/record_provider.dart';
 import 'package:thing_note/features/thing_name/domain/thing_name.dart';
 import 'package:thing_note/features/thing_name/presentation/providers/thing_name_provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class RecordDetailScreen extends ConsumerWidget {
   final int recordId;
@@ -22,7 +23,7 @@ class RecordDetailScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('记录详情'),
+        title: Text(AppLocalizations.of(context)!.recordDetail),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -35,14 +36,14 @@ class RecordDetailScreen extends ConsumerWidget {
                 ? PopupMenuButton<String>(
                     onSelected: (value) {
                       if (value == 'edit') {
-                        context.push('/record/$recordId/edit');
+                        context.push('/record/${record.id}/edit');
                       } else if (value == 'delete') {
                         _showDeleteDialog(context, ref);
                       }
                     },
                     itemBuilder: (_) => [
-                      const PopupMenuItem(value: 'edit', child: Text('编辑')),
-                      const PopupMenuItem(value: 'delete', child: Text('删除')),
+                      PopupMenuItem(value: 'edit', child: Text(AppLocalizations.of(context)!.edit)),
+                      PopupMenuItem(value: 'delete', child: Text(AppLocalizations.of(context)!.delete)),
                     ],
                   )
                 : const SizedBox.shrink(),
@@ -51,18 +52,18 @@ class RecordDetailScreen extends ConsumerWidget {
       ),
       body: recordAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('加载失败: $err')),
+        error: (err, _) => Center(child: Text(AppLocalizations.of(context)!.loadFailed(err.toString()))),
         data: (record) {
           if (record == null) {
-            return const Center(child: Text('记录不存在'));
+            return Center(child: Text(AppLocalizations.of(context)!.recordNotExist));
           }
-          return _buildContent(context, record, thingNamesAsync);
+          return _buildContent(context, ref, record, thingNamesAsync);
         },
       ),
     );
   }
 
-  Widget _buildContent(BuildContext context, EpisodeRecord record, AsyncValue<List<ThingName>> thingNamesAsync) {
+  Widget _buildContent(BuildContext context, WidgetRef ref, EpisodeRecord record, AsyncValue<List<ThingName>> thingNamesAsync) {
     String? thingName;
     if (thingNamesAsync.hasValue) {
       final thingNames = thingNamesAsync.value!;
@@ -84,34 +85,72 @@ class RecordDetailScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSection(
-            context,
-            icon: Icons.calendar_today,
-            title: '发生时间',
-            child: Text(DateFormatter.formatDateTime(record.occurredAt)),
-          ),
-          if (thingName != null) ...[
-            const SizedBox(height: 16),
-            _buildSection(
-              context,
-              icon: Icons.category,
-              title: '事件名称',
-              child: Text(thingName),
+          Hero(
+            tag: 'record_${record.id}',
+            child: Material(
+              type: MaterialType.transparency,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSection(
+                    context,
+                    icon: Icons.calendar_today,
+                    title: AppLocalizations.of(context)!.occurredAt,
+                    child: Text(DateFormatter.formatDateTime(record.occurredAt)),
+                  ),
+                  if (thingName != null) ...[
+                    const SizedBox(height: 16),
+                    _buildSection(
+                      context,
+                      icon: Icons.category,
+                      title: AppLocalizations.of(context)!.thingName,
+                      child: Text(thingName),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  _buildSection(
+                    context,
+                    icon: Icons.timer,
+                    title: AppLocalizations.of(context)!.duration,
+                    child: Text(DurationFormatter.formatShort(record.duration)),
+                  ),
+                  if (record.hasReminder) ...[
+                    const SizedBox(height: 16),
+                    _buildSection(
+                      context,
+                      icon: Icons.alarm,
+                      title: AppLocalizations.of(context)!.reminder,
+                      child: Row(
+                        children: [
+                          Text(AppLocalizations.of(context)!.reminderSet),
+                          const SizedBox(width: 8),
+                          TextButton.icon(
+                            icon: const Icon(Icons.close, size: 16),
+                            label: Text(AppLocalizations.of(context)!.closeReminder),
+                            onPressed: () async {
+                              await ref.read(recordNotifierProvider.notifier).update(
+                                    record.copyWith(hasReminder: false),
+                                  );
+                              ref.invalidate(recordDetailProvider(recordId));
+                              ref.invalidate(recordListProvider);
+                              ref.invalidate(reminderCountProvider);
+                              ref.invalidate(reminderRecordsProvider);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
-          ],
-          const SizedBox(height: 16),
-          _buildSection(
-            context,
-            icon: Icons.timer,
-            title: '持续时长',
-            child: Text(DurationFormatter.formatShort(record.duration)),
           ),
           if (record.note.isNotEmpty) ...[
             const SizedBox(height: 16),
             _buildSection(
               context,
               icon: Icons.note,
-              title: '备注',
+              title: AppLocalizations.of(context)!.note,
               child: Text(record.note),
             ),
           ],
@@ -120,7 +159,7 @@ class RecordDetailScreen extends ConsumerWidget {
             _buildSection(
               context,
               icon: Icons.photo_library,
-              title: '照片 (${record.photoPaths.length})',
+              title: '${AppLocalizations.of(context)!.photos} (${record.photoPaths.length})',
               child: _buildPhotoGallery(context, record)),
           ],
           if (record.hasAudio) ...[
@@ -128,7 +167,7 @@ class RecordDetailScreen extends ConsumerWidget {
             _buildSection(
               context,
               icon: Icons.mic,
-              title: '录音 (${record.audioPaths.length})',
+              title: '${AppLocalizations.of(context)!.audios} (${record.audioPaths.length})',
               child: Column(
                 children: record.audioPaths.map((path) {
                   return Padding(
@@ -141,14 +180,14 @@ class RecordDetailScreen extends ConsumerWidget {
           ],
           const SizedBox(height: 24),
           Text(
-            '创建于 ${DateFormatter.formatDateTime(record.createdAt)}',
+            '${AppLocalizations.of(context)!.createdAt} ${DateFormatter.formatDateTime(record.createdAt)}',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.outline,
                 ),
           ),
           if (record.createdAt != record.updatedAt)
             Text(
-              '更新于 ${DateFormatter.formatDateTime(record.updatedAt)}',
+              '${AppLocalizations.of(context)!.updatedAt} ${DateFormatter.formatDateTime(record.updatedAt)}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.outline,
                   ),
@@ -205,6 +244,7 @@ class RecordDetailScreen extends ConsumerWidget {
                 width: 100,
                 height: 100,
                 fit: BoxFit.cover,
+                cacheWidth: 200,
                 errorBuilder: (_, __, ___) => Container(
                   width: 100,
                   height: 100,
@@ -223,15 +263,7 @@ class RecordDetailScreen extends ConsumerWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => Scaffold(
-          backgroundColor: Colors.black,
-          appBar: AppBar(backgroundColor: Colors.black),
-          body: Center(
-            child: InteractiveViewer(
-              child: Image.file(File(path)),
-            ),
-          ),
-        ),
+        builder: (_) => _FullScreenImageViewer(imagePath: path),
       ),
     );
   }
@@ -240,23 +272,46 @@ class RecordDetailScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('确认删除'),
-        content: const Text('确定要删除这条记录吗？此操作不可撤销。'),
+        title: Text(AppLocalizations.of(ctx)!.confirmDelete),
+        content: Text(AppLocalizations.of(ctx)!.confirmDeleteRecord),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('取消'),
+            child: Text(AppLocalizations.of(ctx)!.cancel),
           ),
           TextButton(
-            onPressed: () {
-              ref.read(recordNotifierProvider.notifier).delete(recordId);
+            onPressed: () async {
+              await ref.read(recordNotifierProvider.notifier).delete(recordId);
               ref.invalidate(recordListProvider);
-              Navigator.pop(ctx);
-              Navigator.pop(context);
+              if (ctx.mounted) Navigator.pop(ctx);
+              if (context.mounted) Navigator.pop(context);
             },
-            child: const Text('删除'),
+            child: Text(AppLocalizations.of(ctx)!.delete),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _FullScreenImageViewer extends StatelessWidget {
+  final String imagePath;
+
+  const _FullScreenImageViewer({required this.imagePath});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+      ),
+      body: Center(
+        child: InteractiveViewer(
+          minScale: 0.5,
+          maxScale: 4.0,
+          child: Image.file(File(imagePath)),
+        ),
       ),
     );
   }
