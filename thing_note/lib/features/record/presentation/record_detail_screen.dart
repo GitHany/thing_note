@@ -228,28 +228,39 @@ class RecordDetailScreen extends ConsumerWidget {
   }
 
   Widget _buildPhotoGallery(BuildContext context, EpisodeRecord record) {
+    const double itemSize = 88.0;
+    const double spacing = 8.0;
+    final int rowCount = (record.photoPaths.length / 3).ceil();
+    final double gridHeight = rowCount * itemSize + (rowCount - 1) * spacing;
+
     return SizedBox(
-      height: 100,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
+      height: gridHeight,
+      child: GridView.builder(
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          crossAxisSpacing: spacing,
+          mainAxisSpacing: spacing,
+          childAspectRatio: 1,
+        ),
         itemCount: record.photoPaths.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
           return GestureDetector(
-            onTap: () => _showFullScreenImage(context, record.photoPaths[index]),
+            onTap: () => _showFullScreenImage(context, record.photoPaths, index),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.file(
                 File(record.photoPaths[index]),
-                width: 100,
-                height: 100,
+                width: double.infinity,
+                height: double.infinity,
                 fit: BoxFit.cover,
-                cacheWidth: 200,
+                cacheWidth: 176,
                 errorBuilder: (_, __, ___) => Container(
-                  width: 100,
-                  height: 100,
                   color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  child: const Icon(Icons.broken_image),
+                  child: Icon(
+                    Icons.broken_image,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
                 ),
               ),
             ),
@@ -259,11 +270,11 @@ class RecordDetailScreen extends ConsumerWidget {
     );
   }
 
-  void _showFullScreenImage(BuildContext context, String path) {
+  void _showFullScreenImage(BuildContext context, List<String> paths, int initialIndex) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => _FullScreenImageViewer(imagePath: path),
+        builder: (_) => _FullScreenImageViewer(imagePaths: paths, initialIndex: initialIndex),
       ),
     );
   }
@@ -294,10 +305,35 @@ class RecordDetailScreen extends ConsumerWidget {
   }
 }
 
-class _FullScreenImageViewer extends StatelessWidget {
-  final String imagePath;
+class _FullScreenImageViewer extends StatefulWidget {
+  final List<String> imagePaths;
+  final int initialIndex;
 
-  const _FullScreenImageViewer({required this.imagePath});
+  const _FullScreenImageViewer({
+    required this.imagePaths,
+    this.initialIndex = 0,
+  });
+
+  @override
+  State<_FullScreenImageViewer> createState() => _FullScreenImageViewerState();
+}
+
+class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
+  late PageController _pageController;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -305,13 +341,35 @@ class _FullScreenImageViewer extends StatelessWidget {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: Text('${_currentIndex + 1} / ${widget.imagePaths.length}'),
       ),
-      body: Center(
-        child: InteractiveViewer(
-          minScale: 0.5,
-          maxScale: 4.0,
-          child: Image.file(File(imagePath)),
-        ),
+      body: PageView.builder(
+        controller: _pageController,
+        itemCount: widget.imagePaths.length,
+        onPageChanged: (index) {
+          setState(() => _currentIndex = index);
+        },
+        itemBuilder: (context, index) {
+          return InteractiveViewer(
+            minScale: 0.5,
+            maxScale: 4.0,
+            child: Center(
+              child: Image.file(
+                File(widget.imagePaths[index]),
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.broken_image, color: Colors.white54, size: 64),
+                    SizedBox(height: 16),
+                    Text('图片加载失败', style: TextStyle(color: Colors.white54)),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

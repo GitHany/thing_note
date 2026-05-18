@@ -274,26 +274,64 @@ class AudioRecorderSectionState extends ConsumerState<AudioRecorderSection>
             ],
           ),
         const SizedBox(height: 12),
-        ..._audioPaths.asMap().entries.map((entry) {
-          final index = entry.key;
-          final path = entry.value;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+        if (_audioPaths.isNotEmpty)
+          _AudioList(
+            audioPaths: _audioPaths,
+            audioDurationsSec: _audioDurationsSec,
+            onRemove: _removeAudio,
+          ),
+      ],
+    );
+  }
+}
+
+class _AudioList extends StatelessWidget {
+  final List<String> audioPaths;
+  final List<int> audioDurationsSec;
+  final void Function(int index) onRemove;
+
+  const _AudioList({
+    required this.audioPaths,
+    required this.audioDurationsSec,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const double itemHeight = 56.0;
+    const double itemSpacing = 8.0;
+    final int maxVisibleItems = 5;
+    final bool needsScroll = audioPaths.length > maxVisibleItems;
+    final double listHeight = needsScroll
+        ? maxVisibleItems * (itemHeight + itemSpacing)
+        : audioPaths.length * (itemHeight + itemSpacing);
+
+    return SizedBox(
+      height: listHeight,
+      child: ListView.separated(
+        physics: needsScroll
+            ? const AlwaysScrollableScrollPhysics()
+            : const NeverScrollableScrollPhysics(),
+        itemCount: audioPaths.length,
+        separatorBuilder: (_, __) => const SizedBox(height: itemSpacing),
+        itemBuilder: (context, index) {
+          return SizedBox(
+            height: itemHeight,
             child: Row(
               children: [
                 Expanded(
-                  child: AudioPlayerWidget(audioPath: path),
+                  child: AudioPlayerWidget(audioPath: audioPaths[index]),
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete_outline),
-                  onPressed: () => _removeAudio(index),
+                  onPressed: () => onRemove(index),
                   color: Theme.of(context).colorScheme.error,
                 ),
               ],
             ),
           );
-        }),
-      ],
+        },
+      ),
     );
   }
 }
