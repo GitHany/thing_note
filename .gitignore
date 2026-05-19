@@ -117,3 +117,4 @@ AndroidManifest.xml
 # Design docs
 docs/
 .superpowers/
+.omc/
