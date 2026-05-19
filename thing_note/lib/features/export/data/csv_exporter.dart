@@ -17,14 +17,14 @@ class CsvExporter implements ExportService {
     final thingNameMap = {for (final tn in thingNameList) tn.id: tn.name};
     final buffer = StringBuffer();
 
-    buffer.writeln('ID,发生时间,持续时长(秒),备注,照片数量,录音数量,事件名称,音频时长(秒),创建时间,更新时间');
+    buffer.writeln('ID,发生时间,持续时长(秒),备注,照片数量,录音数量,视频数量,事件名称,音频时长(秒),创建时间,更新时间');
 
     for (final record in records) {
       final note = record.note.replaceAll(',', '，');
       final thingName = thingNameMap[record.thingNameId] ?? '无';
       final audioDurations = record.audioDurationsSec.join(';');
       buffer.writeln(
-        '${record.id},${record.occurredAt.toIso8601String()},${record.durationSec},$note,${record.photoPaths.length},${record.audioPaths.length},$thingName,$audioDurations,${record.createdAt.toIso8601String()},${record.updatedAt.toIso8601String()}',
+        '${record.id},${record.occurredAt.toIso8601String()},${record.durationSec},$note,${record.photoPaths.length},${record.audioPaths.length},${record.videoPaths.length},$thingName,$audioDurations,${record.createdAt.toIso8601String()},${record.updatedAt.toIso8601String()}',
       );
     }
 

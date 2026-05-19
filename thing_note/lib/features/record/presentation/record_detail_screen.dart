@@ -10,6 +10,7 @@ import 'package:thing_note/features/record/presentation/providers/record_provide
 import 'package:thing_note/features/thing_name/domain/thing_name.dart';
 import 'package:thing_note/features/thing_name/presentation/providers/thing_name_provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:video_player/video_player.dart';
 
 class RecordDetailScreen extends ConsumerWidget {
   final int recordId;
@@ -145,6 +146,15 @@ class RecordDetailScreen extends ConsumerWidget {
               ),
             ),
           ),
+          if (record.hasLocation) ...[
+            const SizedBox(height: 16),
+            _buildSection(
+              context,
+              icon: Icons.location_on,
+              title: AppLocalizations.of(context)!.location,
+              child: Text(record.address ?? ''),
+            ),
+          ],
           if (record.note.isNotEmpty) ...[
             const SizedBox(height: 16),
             _buildSection(
@@ -161,6 +171,14 @@ class RecordDetailScreen extends ConsumerWidget {
               icon: Icons.photo_library,
               title: '${AppLocalizations.of(context)!.photos} (${record.photoPaths.length})',
               child: _buildPhotoGallery(context, record)),
+          ],
+          if (record.hasVideos) ...[
+            const SizedBox(height: 16),
+            _buildSection(
+              context,
+              icon: Icons.videocam,
+              title: '${AppLocalizations.of(context)!.videos} (${record.videoPaths.length})',
+              child: _buildVideoList(context, record)),
           ],
           if (record.hasAudio) ...[
             const SizedBox(height: 16),
@@ -279,6 +297,60 @@ class RecordDetailScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildVideoList(BuildContext context, EpisodeRecord record) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: record.videoPaths.asMap().entries.map((entry) {
+        final index = entry.key;
+        final path = entry.value;
+        return Container(
+          width: 88,
+          height: 88,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => _openVideo(context, path),
+              borderRadius: BorderRadius.circular(8),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.play_circle_filled,
+                    size: 32,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${AppLocalizations.of(context)!.videos} ${index + 1}',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  void _openVideo(BuildContext context, String path) {
+    final file = File(path);
+    if (!file.existsSync()) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _VideoPlayerPage(videoPath: path),
+      ),
+    );
+  }
+
   void _showDeleteDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
@@ -371,6 +443,116 @@ class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
           );
         },
       ),
+    );
+  }
+}
+
+class _VideoPlayerPage extends StatefulWidget {
+  final String videoPath;
+
+  const _VideoPlayerPage({required this.videoPath});
+
+  @override
+  State<_VideoPlayerPage> createState() => _VideoPlayerPageState();
+}
+
+class _VideoPlayerPageState extends State<_VideoPlayerPage> {
+  late VideoPlayerController _controller;
+  bool _isInitialized = false;
+  bool _hasError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.file(File(widget.videoPath))
+      ..initialize().then((_) {
+        if (mounted) {
+          setState(() {
+            _isInitialized = true;
+          });
+          _controller.play();
+        }
+      }).catchError((error) {
+        if (mounted) {
+          setState(() => _hasError = true);
+        }
+      });
+    _controller.addListener(() {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+      ),
+      body: Center(
+        child: _hasError
+            ? Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.white54, size: 64),
+                  const SizedBox(height: 16),
+                  Text(
+                    AppLocalizations.of(context)!.loadFailed(''),
+                    style: const TextStyle(color: Colors.white54),
+                  ),
+                ],
+              )
+            : _isInitialized
+                ? AspectRatio(
+                    aspectRatio: _controller.value.aspectRatio,
+                    child: Stack(
+                      alignment: Alignment.bottomCenter,
+                      children: [
+                        VideoPlayer(_controller),
+                        VideoProgressIndicator(
+                          _controller,
+                          allowScrubbing: true,
+                          colors: VideoProgressColors(
+                            playedColor: Theme.of(context).colorScheme.primary,
+                            bufferedColor: Colors.white.withOpacity(0.3),
+                            backgroundColor: Colors.white.withOpacity(0.1),
+                          ),
+                        ),
+                        if (!_controller.value.isPlaying)
+                          GestureDetector(
+                            onTap: () => _controller.play(),
+                            child: const Icon(
+                              Icons.play_circle_fill,
+                              size: 64,
+                              color: Colors.white70,
+                            ),
+                          ),
+                      ],
+                    ),
+                  )
+                : const CircularProgressIndicator(),
+      ),
+      floatingActionButton: _isInitialized
+          ? FloatingActionButton(
+              onPressed: () {
+                setState(() {
+                  _controller.value.isPlaying
+                      ? _controller.pause()
+                      : _controller.play();
+                });
+              },
+              child: Icon(
+                _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+              ),
+            )
+          : null,
     );
   }
 }

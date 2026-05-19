@@ -6,9 +6,13 @@ class EpisodeRecord {
   final List<String> photoPaths;
   final List<String> audioPaths;
   final List<int> audioDurationsSec;
+  final List<String> videoPaths;
   final int? thingNameId;
   final String? annotationsJson;
   final bool hasReminder;
+  final double? latitude;
+  final double? longitude;
+  final String? address;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -20,9 +24,13 @@ class EpisodeRecord {
     this.photoPaths = const [],
     this.audioPaths = const [],
     this.audioDurationsSec = const [],
+    this.videoPaths = const [],
     this.thingNameId,
     this.annotationsJson,
     this.hasReminder = false,
+    this.latitude,
+    this.longitude,
+    this.address,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -35,9 +43,13 @@ class EpisodeRecord {
     List<String>? photoPaths,
     List<String>? audioPaths,
     List<int>? audioDurationsSec,
+    List<String>? videoPaths,
     int? thingNameId,
     String? annotationsJson,
     bool? hasReminder,
+    double? latitude,
+    double? longitude,
+    String? address,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -49,9 +61,13 @@ class EpisodeRecord {
       photoPaths: photoPaths ?? this.photoPaths,
       audioPaths: audioPaths ?? this.audioPaths,
       audioDurationsSec: audioDurationsSec ?? this.audioDurationsSec,
+      videoPaths: videoPaths ?? this.videoPaths,
       thingNameId: thingNameId ?? this.thingNameId,
       annotationsJson: annotationsJson ?? this.annotationsJson,
       hasReminder: hasReminder ?? this.hasReminder,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      address: address ?? this.address,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -60,9 +76,11 @@ class EpisodeRecord {
   Duration get duration => Duration(seconds: durationSec);
   bool get hasPhotos => photoPaths.isNotEmpty;
   bool get hasAudio => audioPaths.isNotEmpty;
+  bool get hasVideos => videoPaths.isNotEmpty;
   bool get hasAnnotations =>
       annotationsJson != null &&
       annotationsJson!.isNotEmpty &&
       annotationsJson != '{"version":1,"elements":[]}';
   int get totalAudioDurationSec => audioDurationsSec.fold(0, (sum, d) => sum + d);
+  bool get hasLocation => latitude != null && longitude != null;
 }

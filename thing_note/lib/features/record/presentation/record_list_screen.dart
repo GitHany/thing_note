@@ -254,6 +254,7 @@ class _RecordListScreenState extends ConsumerState<RecordListScreen> {
                             ref.invalidate(recordListProvider);
                             ref.invalidate(recordDetailProvider(record.id!));
                             ref.invalidate(reminderRecordsProvider);
+                            ref.invalidate(reminderCountProvider);
                             final updatedReminders = await ref.read(reminderRecordsProvider.future);
                             if (updatedReminders.isEmpty && context.mounted) {
                               Navigator.pop(dialogContext);

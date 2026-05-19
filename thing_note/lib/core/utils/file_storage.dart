@@ -22,6 +22,11 @@ class FileStorage {
     return Directory('${recordsDir.path}/photos');
   }
 
+  static Future<Directory> get videosDirectory async {
+    final recordsDir = await recordsDirectory;
+    return Directory('${recordsDir.path}/videos');
+  }
+
   static Future<String> saveAudioFile(String sourcePath) async {
     final audioDir = await audioDirectory;
     if (!await audioDir.exists()) {
@@ -45,6 +50,18 @@ class FileStorage {
     return destFile.path;
   }
 
+  static Future<String> saveVideoFile(String sourcePath) async {
+    final videosDir = await videosDirectory;
+    if (!await videosDir.exists()) {
+      await videosDir.create(recursive: true);
+    }
+    final ext = sourcePath.split('.').last.toLowerCase();
+    final fileName = 'video_${DateTime.now().millisecondsSinceEpoch}.$ext';
+    final destFile = File('${videosDir.path}/$fileName');
+    await File(sourcePath).copy(destFile.path);
+    return destFile.path;
+  }
+
   static Future<String> saveAudioBytes(List<int> bytes, String ext) async {
     final audioDir = await audioDirectory;
     if (!await audioDir.exists()) {
@@ -63,6 +80,17 @@ class FileStorage {
     }
     final fileName = 'photo_${DateTime.now().millisecondsSinceEpoch}.$ext';
     final destFile = File('${photosDir.path}/$fileName');
+    await destFile.writeAsBytes(bytes);
+    return destFile.path;
+  }
+
+  static Future<String> saveVideoBytes(List<int> bytes, String ext) async {
+    final videosDir = await videosDirectory;
+    if (!await videosDir.exists()) {
+      await videosDir.create(recursive: true);
+    }
+    final fileName = 'video_${DateTime.now().millisecondsSinceEpoch}.$ext';
+    final destFile = File('${videosDir.path}/$fileName');
     await destFile.writeAsBytes(bytes);
     return destFile.path;
   }

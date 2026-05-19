@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -42,6 +43,30 @@ class MediaServiceImpl implements MediaService {
       maxWidth: 1920,
       maxHeight: 1920,
     );
+  }
+
+  @override
+  Future<List<XFile>> pickVideosFromGallery() async {
+    final List<XFile> videos = [];
+    final XFile? video = await _imagePicker.pickVideo(
+      source: ImageSource.gallery,
+    );
+    if (video != null) {
+      videos.add(video);
+    }
+    return videos;
+  }
+
+  @override
+  Future<List<XFile>> pickAudioFromFiles() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.audio,
+      allowMultiple: true,
+    );
+    if (result == null || result.files.isEmpty) {
+      return [];
+    }
+    return result.files.where((f) => f.path != null).map((f) => XFile(f.path!)).toList();
   }
 
   @override

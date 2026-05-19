@@ -7,6 +7,7 @@ import 'package:thing_note/features/record/presentation/record_detail_screen.dar
 import 'package:thing_note/features/settings/presentation/settings_screen.dart';
 import 'package:thing_note/features/thing_name/presentation/thing_name_manage_screen.dart';
 import 'package:thing_note/features/thing_name/presentation/thing_name_detail_screen.dart';
+import 'package:thing_note/features/export/presentation/backup_list_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -81,6 +82,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => _buildPageWithTransition(
           key: state.pageKey,
           child: const SettingsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/settings/backups',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          key: state.pageKey,
+          child: const BackupListScreen(),
         ),
       ),
       GoRoute(

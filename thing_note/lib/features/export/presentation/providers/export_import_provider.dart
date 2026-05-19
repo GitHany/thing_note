@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:thing_note/features/record/domain/episode_record.dart';
 import 'package:thing_note/features/export/data/zip_exporter.dart';
 import 'package:thing_note/features/thing_name/domain/thing_name.dart';
@@ -90,3 +91,32 @@ final exportImportNotifierProvider =
     StateNotifierProvider<ExportImportNotifier, ExportImportState>((ref) {
   return ExportImportNotifier();
 });
+
+Future<Directory> _getExportedZipsDir() async {
+  final appDir = await getApplicationDocumentsDirectory();
+  return Directory('${appDir.path}/thing_note/exported_zips');
+}
+
+final backupZipListProvider = FutureProvider<List<FileSystemEntity>>((ref) async {
+  final zipDir = await _getExportedZipsDir();
+  if (!await zipDir.exists()) {
+    return [];
+  }
+  final entities = await zipDir.list().toList();
+  final zipFiles = entities.whereType<File>().where((f) => f.path.endsWith('.zip')).toList();
+  zipFiles.sort((a, b) {
+    final statA = a.statSync();
+    final statB = b.statSync();
+    return statB.modified.compareTo(statA.modified);
+  });
+  return zipFiles;
+});
+
+Future<void> deleteBackupZips(List<String> paths) async {
+  for (final path in paths) {
+    final file = File(path);
+    if (await file.exists()) {
+      await file.delete();
+    }
+  }
+}

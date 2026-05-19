@@ -33,6 +33,10 @@ class ZipExporter {
         infoBuffer.writeln('音频时长(秒): ${record.audioDurationsSec.join(",")}');
       }
 
+      if (record.hasVideos) {
+        infoBuffer.writeln('视频数量: ${record.videoPaths.length}');
+      }
+
       final infoData = utf8.encode(infoBuffer.toString());
       archive.addFile(ArchiveFile('$folderName/info.txt', infoData.length, infoData));
 
@@ -54,6 +58,15 @@ class ZipExporter {
         }
       }
 
+      for (int j = 0; j < record.videoPaths.length; j++) {
+        final videoFile = File(record.videoPaths[j]);
+        if (await videoFile.exists()) {
+          final videoData = await videoFile.readAsBytes();
+          final ext = videoFile.path.split('.').last;
+          archive.addFile(ArchiveFile('$folderName/videos/video_$j.$ext', videoData.length, videoData));
+        }
+      }
+
       onProgress?.call(i + 1, total);
     }
 
@@ -62,8 +75,8 @@ class ZipExporter {
       throw Exception('Failed to create zip archive');
     }
 
-    final tempDir = await getTemporaryDirectory();
-    final zipDir = Directory('${tempDir.path}/exported_zips');
+    final tempDir = await getApplicationDocumentsDirectory();
+    final zipDir = Directory('${tempDir.path}/thing_note/exported_zips');
     if (!await zipDir.exists()) {
       await zipDir.create(recursive: true);
     }

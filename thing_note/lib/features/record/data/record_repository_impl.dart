@@ -37,9 +37,15 @@ class RecordRepositoryImpl implements RecordRepository {
       audioDurationsSec: List<int>.from(
         jsonDecode(map['audio_durations_sec'] as String) as List,
       ),
+      videoPaths: List<String>.from(
+        jsonDecode(map['video_paths'] as String) as List,
+      ),
       thingNameId: map['thing_name_id'] as int?,
       annotationsJson: map['annotations'] as String?,
       hasReminder: (map['has_reminder'] as int?) == 1,
+      latitude: map['latitude'] as double?,
+      longitude: map['longitude'] as double?,
+      address: map['address'] as String?,
       createdAt: DateTime.parse(map['created_at'] as String),
       updatedAt: DateTime.parse(map['updated_at'] as String),
     );
@@ -54,9 +60,13 @@ class RecordRepositoryImpl implements RecordRepository {
       'photo_paths': jsonEncode(record.photoPaths),
       'audio_paths': jsonEncode(record.audioPaths),
       'audio_durations_sec': jsonEncode(record.audioDurationsSec),
+      'video_paths': jsonEncode(record.videoPaths),
       'thing_name_id': record.thingNameId,
       if (record.annotationsJson != null) 'annotations': record.annotationsJson,
       'has_reminder': record.hasReminder ? 1 : 0,
+      'latitude': record.latitude,
+      'longitude': record.longitude,
+      'address': record.address,
       'created_at': record.createdAt.toIso8601String(),
       'updated_at': record.updatedAt.toIso8601String(),
     };
@@ -117,6 +127,10 @@ class RecordRepositoryImpl implements RecordRepository {
           final file = File(path);
           if (await file.exists()) await file.delete();
         }),
+        ...record.videoPaths.map((path) async {
+          final file = File(path);
+          if (await file.exists()) await file.delete();
+        }),
       ]);
     }
     await db.delete('episode_records', where: 'id = ?', whereArgs: [id]);
@@ -133,6 +147,10 @@ class RecordRepositoryImpl implements RecordRepository {
           if (await file.exists()) await file.delete();
         }),
         ...record.audioPaths.map((path) async {
+          final file = File(path);
+          if (await file.exists()) await file.delete();
+        }),
+        ...record.videoPaths.map((path) async {
           final file = File(path);
           if (await file.exists()) await file.delete();
         }),

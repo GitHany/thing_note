@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:thing_note/core/utils/duration_formatter.dart';
 import 'package:thing_note/core/utils/file_storage.dart';
 import 'package:thing_note/features/media/presentation/providers/media_provider.dart';
@@ -89,9 +91,9 @@ class AudioRecorderSectionState extends ConsumerState<AudioRecorderSection>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('麦克风权限被拒绝，请在设置中开启'),
+            content: Text(AppLocalizations.of(context)!.locationPermissionDenied),
             action: SnackBarAction(
-              label: '设置',
+              label: AppLocalizations.of(context)!.settings,
               onPressed: () => openAppSettings(),
             ),
           ),
@@ -135,7 +137,7 @@ class AudioRecorderSectionState extends ConsumerState<AudioRecorderSection>
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('录音启动失败，请重试')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.saveFailed('recording failed'))),
           );
         }
       }
@@ -145,7 +147,7 @@ class AudioRecorderSectionState extends ConsumerState<AudioRecorderSection>
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('录音失败: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.saveFailed(e.toString()))),
         );
       }
     }
@@ -173,7 +175,7 @@ class AudioRecorderSectionState extends ConsumerState<AudioRecorderSection>
         } catch (e) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('保存录音失败: $e')),
+              SnackBar(content: Text(AppLocalizations.of(context)!.saveFailed(e.toString()))),
             );
           }
         }
@@ -185,7 +187,54 @@ class AudioRecorderSectionState extends ConsumerState<AudioRecorderSection>
       widget.onRecordingStateChanged?.call(false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('停止录音失败: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.saveFailed(e.toString()))),
+        );
+      }
+    }
+  }
+
+  Future<void> _pickAudioFromFile() async {
+    if (_isRecording) return;
+    try {
+      final files = await ref.read(mediaServiceProvider).pickAudioFromFiles();
+      if (files.isEmpty) return;
+
+      for (final file in files) {
+        final path = file.path;
+        int durationSec = 0;
+        try {
+          final player = AudioPlayer();
+          await player.setSource(DeviceFileSource(path));
+          final duration = await player.getDuration();
+          durationSec = (duration?.inSeconds ?? 0);
+          if (durationSec == 0) {
+            final completer = Completer<int>();
+            final sub = player.onDurationChanged.listen((d) {
+              if (!completer.isCompleted) {
+                completer.complete(d.inSeconds);
+              }
+            });
+            durationSec = await completer.future.timeout(
+              const Duration(seconds: 3),
+              onTimeout: () => 0,
+            );
+            await sub.cancel();
+          }
+          await player.dispose();
+        } catch (_) {
+          durationSec = 0;
+        }
+
+        setState(() {
+          _audioPaths.add(path);
+          _audioDurationsSec.add(durationSec);
+        });
+      }
+      widget.onAudioChanged(_audioPaths, _audioDurationsSec);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context)!.pickAudioFailed(e.toString()))),
         );
       }
     }
@@ -195,17 +244,17 @@ class AudioRecorderSectionState extends ConsumerState<AudioRecorderSection>
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('确认删除'),
-        content: const Text('确定要删除这段录音吗？'),
+        title: Text(AppLocalizations.of(ctx)!.confirmDelete),
+        content: Text(AppLocalizations.of(ctx)!.confirmDeleteRecord),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('取消'),
+            child: Text(AppLocalizations.of(ctx)!.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             child: Text(
-              '删除',
+              AppLocalizations.of(ctx)!.delete,
               style: TextStyle(color: Theme.of(ctx).colorScheme.error),
             ),
           ),
@@ -227,7 +276,7 @@ class AudioRecorderSectionState extends ConsumerState<AudioRecorderSection>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '录音',
+          AppLocalizations.of(context)!.audios,
           style: Theme.of(context).textTheme.titleSmall,
         ),
         const SizedBox(height: 8),
@@ -252,7 +301,7 @@ class AudioRecorderSectionState extends ConsumerState<AudioRecorderSection>
                 FilledButton.icon(
                   onPressed: stopRecording,
                   icon: const Icon(Icons.stop),
-                  label: const Text('停止'),
+                  label: Text(AppLocalizations.of(context)!.stopRecording),
                 ),
               ],
             ),
@@ -269,7 +318,13 @@ class AudioRecorderSectionState extends ConsumerState<AudioRecorderSection>
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.mic),
-                label: Text(_isInitializing ? '初始化中...' : '添加录音'),
+                label: Text(_isInitializing ? AppLocalizations.of(context)!.loading : AppLocalizations.of(context)!.startRecording),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                onPressed: _pickAudioFromFile,
+                icon: const Icon(Icons.audio_file),
+                label: Text(AppLocalizations.of(context)!.addAudioFromFile),
               ),
             ],
           ),
@@ -300,7 +355,7 @@ class _AudioList extends StatelessWidget {
   Widget build(BuildContext context) {
     const double itemHeight = 56.0;
     const double itemSpacing = 8.0;
-    final int maxVisibleItems = 5;
+    const int maxVisibleItems = 5;
     final bool needsScroll = audioPaths.length > maxVisibleItems;
     final double listHeight = needsScroll
         ? maxVisibleItems * (itemHeight + itemSpacing)

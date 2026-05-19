@@ -1,8 +1,6 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:thing_note/app/theme/locale_provider.dart';
 import 'package:thing_note/app/theme/theme_provider.dart';
 import 'package:thing_note/features/record/data/record_repository_impl.dart';
@@ -17,48 +15,6 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-
-  Future<void> _clearTempZips(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(AppLocalizations.of(ctx)!.confirmClear),
-        content: Text(AppLocalizations.of(ctx)!.confirmClearTemp),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(AppLocalizations.of(ctx)!.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(AppLocalizations.of(ctx)!.confirmClearBtn),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true && context.mounted) {
-      try {
-        final tempDir = await getTemporaryDirectory();
-        final zipDir = Directory('${tempDir.path}/exported_zips');
-        if (await zipDir.exists()) {
-          await zipDir.delete(recursive: true);
-        }
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppLocalizations.of(context)!.tempZipsCleared)),
-          );
-        }
-      } catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppLocalizations.of(context)!.clearFailed(e.toString()))),
-          );
-        }
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
@@ -85,18 +41,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const Divider(),
           ListTile(
-            leading: const Icon(Icons.category),
-            title: Text(AppLocalizations.of(context)!.thingNameManage),
-            subtitle: Text(AppLocalizations.of(context)!.thingNameManageDesc),
+            leading: const Icon(Icons.folder_zip),
+            title: Text(AppLocalizations.of(context)!.viewBackupZips),
+            subtitle: Text(AppLocalizations.of(context)!.viewBackupZipsDesc),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/settings/thing-names'),
-          ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.delete_sweep),
-            title: Text(AppLocalizations.of(context)!.clearTempZips),
-            subtitle: Text(AppLocalizations.of(context)!.clearTempZipsDesc),
-            onTap: () => _clearTempZips(context),
+            onTap: () => context.push('/settings/backups'),
           ),
           const Divider(),
           ListTile(
@@ -114,7 +63,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 32),
           Center(
             child: Text(
-              AppLocalizations.of(context)!.version('0.0.4'),
+              AppLocalizations.of(context)!.version('0.0.5'),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.outline,
                   ),

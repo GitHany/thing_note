@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:intl/intl.dart';
 import 'package:thing_note/core/utils/file_storage.dart';
 import 'package:thing_note/features/media/presentation/widgets/photo_picker.dart';
@@ -40,6 +42,11 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
   bool _hasReminder = false;
   bool _isDataLoaded = true;
   DateTime? _originalCreatedAt;
+  double? _latitude;
+  double? _longitude;
+  String? _address;
+  bool _isLocating = false;
+  List<String> _videoPaths = [];
 
   DateTime _initialOccurredAt = DateTime.now();
   int _initialDurationSec = 0;
@@ -49,6 +56,10 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
   List<int> _initialAudioDurationsSec = [];
   int? _initialThingNameId;
   bool _initialHasReminder = false;
+  double? _initialLatitude;
+  double? _initialLongitude;
+  String? _initialAddress;
+  List<String> _initialVideoPaths = [];
 
   @override
   void initState() {
@@ -71,6 +82,7 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
           _durationSec > 0 ||
           _photoPaths.isNotEmpty ||
           _audioPaths.isNotEmpty ||
+          _videoPaths.isNotEmpty ||
           _thingNameId != null ||
           _hasReminder;
 
@@ -85,8 +97,12 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
         _noteController.text != _initialNote ||
         _thingNameId != _initialThingNameId ||
         _hasReminder != _initialHasReminder ||
+        _latitude != _initialLatitude ||
+        _longitude != _initialLongitude ||
+        _address != _initialAddress ||
         !_listEquals(_photoPaths, _initialPhotoPaths) ||
         !_listEquals(_audioPaths, _initialAudioPaths) ||
+        !_listEquals(_videoPaths, _initialVideoPaths) ||
         !_intListEquals(_audioDurationsSec, _initialAudioDurationsSec);
 
     if (changed != _isChanged) {
@@ -150,6 +166,10 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
           _thingNameId = record.thingNameId;
           _hasReminder = record.hasReminder;
           _originalCreatedAt = record.createdAt;
+          _latitude = record.latitude;
+          _longitude = record.longitude;
+          _address = record.address;
+          _videoPaths = List.from(record.videoPaths);
           _initialOccurredAt = record.occurredAt;
           _initialDurationSec = record.durationSec;
           _initialNote = record.note;
@@ -158,6 +178,10 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
           _initialAudioDurationsSec = List.from(record.audioDurationsSec);
           _initialThingNameId = record.thingNameId;
           _initialHasReminder = record.hasReminder;
+          _initialLatitude = record.latitude;
+          _initialLongitude = record.longitude;
+          _initialAddress = record.address;
+          _initialVideoPaths = List.from(record.videoPaths);
           _isDataLoaded = true;
         });
       }
@@ -221,6 +245,19 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
         }
       }
 
+      final List<String> savedVideoPaths = [];
+      for (final path in _videoPaths) {
+        final file = File(path);
+        if (await file.exists()) {
+          if (path.startsWith(appDirPath)) {
+            savedVideoPaths.add(path);
+          } else {
+            final savedPath = await FileStorage.saveVideoFile(path);
+            savedVideoPaths.add(savedPath);
+          }
+        }
+      }
+
       int? thingNameId = _thingNameId;
       if (!_isEditing && thingNameId == null) {
         final defaultThingName = await ref.read(defaultThingNameProvider.future);
@@ -235,8 +272,12 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
         photoPaths: savedPhotoPaths,
         audioPaths: savedAudioPaths,
         audioDurationsSec: _audioDurationsSec,
+        videoPaths: savedVideoPaths,
         thingNameId: thingNameId,
         hasReminder: _hasReminder,
+        latitude: _latitude,
+        longitude: _longitude,
+        address: _address,
         createdAt: _originalCreatedAt ?? now,
         updatedAt: now,
       );
@@ -406,10 +447,33 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
                 },
               ),
               const SizedBox(height: 16),
+              _LocationPicker(
+                address: _address,
+                isLocating: _isLocating,
+                onGetCurrentLocation: _getCurrentLocation,
+                onManualInput: _showManualInputDialog,
+                onClear: () {
+                  setState(() {
+                    _latitude = null;
+                    _longitude = null;
+                    _address = null;
+                  });
+                  _checkChanged();
+                },
+              ),
+              const SizedBox(height: 16),
               PhotoPickerSection(
                 initialPaths: _photoPaths,
                 onPathsChanged: (paths) {
                   setState(() => _photoPaths = paths);
+                  _checkChanged();
+                },
+              ),
+              const SizedBox(height: 16),
+              VideoPickerSection(
+                initialPaths: _videoPaths,
+                onPathsChanged: (paths) {
+                  setState(() => _videoPaths = paths);
                   _checkChanged();
                 },
               ),
@@ -596,6 +660,146 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
       _checkChanged();
     }
   }
+
+  Future<void> _getCurrentLocation() async {
+    setState(() => _isLocating = true);
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppLocalizations.of(context)!.locationFailed('GPS is disabled'))),
+          );
+        }
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(AppLocalizations.of(context)!.locationPermissionDenied)),
+            );
+          }
+          return;
+        }
+      }
+      if (permission == LocationPermission.deniedForever) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppLocalizations.of(context)!.locationPermissionDenied)),
+          );
+        }
+        return;
+      }
+
+      Position? position;
+      try {
+        position = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.medium,
+            timeLimit: Duration(seconds: 10),
+          ),
+        );
+      } catch (e) {
+        position = await Geolocator.getLastKnownPosition();
+        if (position == null) {
+          position = await Geolocator.getCurrentPosition(
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.low,
+              timeLimit: Duration(seconds: 10),
+            ),
+          );
+        }
+      }
+
+      if (position == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppLocalizations.of(context)!.locationFailed('Failed to get location'))),
+          );
+        }
+        return;
+      }
+
+      final pos = position!;
+
+      String? addressText;
+      try {
+        final placemarks = await placemarkFromCoordinates(
+          pos.latitude, pos.longitude,
+        );
+        if (placemarks.isNotEmpty) {
+          final p = placemarks.first;
+          final parts = <String>[
+            if (p.administrativeArea != null && p.administrativeArea!.isNotEmpty) p.administrativeArea!,
+            if (p.locality != null && p.locality!.isNotEmpty) p.locality!,
+            if (p.subLocality != null && p.subLocality!.isNotEmpty) p.subLocality!,
+            if (p.thoroughfare != null && p.thoroughfare!.isNotEmpty) p.thoroughfare!,
+            if (p.subThoroughfare != null && p.subThoroughfare!.isNotEmpty) p.subThoroughfare!,
+            if (p.name != null && p.name!.isNotEmpty) p.name!,
+          ];
+          addressText = parts.where((s) => s.isNotEmpty).join('');
+        }
+      } catch (_) {}
+
+      if (mounted) {
+        setState(() {
+          _latitude = pos.latitude;
+          _longitude = pos.longitude;
+          _address = addressText ?? '${pos.latitude.toStringAsFixed(6)}, ${pos.longitude.toStringAsFixed(6)}';
+        });
+        _checkChanged();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context)!.locationFailed(e.toString()))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLocating = false);
+    }
+  }
+
+  Future<void> _showManualInputDialog() async {
+    final controller = TextEditingController(text: _address ?? '');
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(AppLocalizations.of(ctx)!.manualInput),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: InputDecoration(
+            hintText: AppLocalizations.of(ctx)!.addressHint,
+            border: const OutlineInputBorder(),
+          ),
+          maxLines: 2,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(AppLocalizations.of(ctx)!.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            child: Text(AppLocalizations.of(ctx)!.confirm),
+          ),
+        ],
+      ),
+    );
+    if (result != null && result.trim().isNotEmpty && mounted) {
+      setState(() {
+        _address = result.trim();
+        _latitude = null;
+        _longitude = null;
+      });
+      _checkChanged();
+    }
+  }
 }
 
 class _PulseIndicator extends StatefulWidget {
@@ -637,6 +841,88 @@ class _PulseIndicatorState extends State<_PulseIndicator>
           shape: BoxShape.circle,
         ),
       ),
+    );
+  }
+}
+
+class _LocationPicker extends StatelessWidget {
+  final String? address;
+  final bool isLocating;
+  final VoidCallback onGetCurrentLocation;
+  final VoidCallback onManualInput;
+  final VoidCallback onClear;
+
+  const _LocationPicker({
+    required this.address,
+    required this.isLocating,
+    required this.onGetCurrentLocation,
+    required this.onManualInput,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.location_on, size: 18, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 8),
+            Text(
+              AppLocalizations.of(context)!.location,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (address != null)
+          Padding(
+            padding: const EdgeInsets.only(left: 26, bottom: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    address!,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 18),
+                  onPressed: onClear,
+                  tooltip: AppLocalizations.of(context)!.clearLocation,
+                ),
+              ],
+            ),
+          ),
+        Padding(
+          padding: const EdgeInsets.only(left: 26),
+          child: Row(
+            children: [
+              if (isLocating)
+                const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.my_location, size: 18),
+                  label: Text(AppLocalizations.of(context)!.getCurrentLocation),
+                  onPressed: onGetCurrentLocation,
+                ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.edit_location_alt, size: 18),
+                label: Text(AppLocalizations.of(context)!.manualInput),
+                onPressed: isLocating ? null : onManualInput,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

@@ -29,6 +29,7 @@ class ImportedRecordData {
   final List<String> photoPaths;
   final List<String> audioPaths;
   final List<int> audioDurationsSec;
+  final List<String> videoPaths;
   final int? thingNameId;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -41,6 +42,7 @@ class ImportedRecordData {
     required this.photoPaths,
     required this.audioPaths,
     required this.audioDurationsSec,
+    this.videoPaths = const [],
     this.thingNameId,
     required this.createdAt,
     required this.updatedAt,
@@ -107,15 +109,19 @@ class ZipImporter {
 
     final List<String> photoPaths = [];
     final List<String> audioPaths = [];
+    final List<String> videoPaths = [];
 
     final photosDir = '$folderPath/photos/';
     final audiosDir = '$folderPath/audios/';
+    final videosDir = '$folderPath/videos/';
 
     for (final file in archive.files) {
       if (file.name.startsWith(photosDir) && !file.isFile) {
         photoPaths.add(file.name);
       } else if (file.name.startsWith(audiosDir) && !file.isFile) {
         audioPaths.add(file.name);
+      } else if (file.name.startsWith(videosDir) && !file.isFile) {
+        videoPaths.add(file.name);
       }
     }
 
@@ -127,6 +133,7 @@ class ZipImporter {
       photoPaths: photoPaths,
       audioPaths: audioPaths,
       audioDurationsSec: List.filled(audioPaths.length, 0),
+      videoPaths: videoPaths,
       thingNameId: thingNameId,
       createdAt: DateTime.parse(createdAtStr),
       updatedAt: DateTime.parse(updatedAtStr),
@@ -148,6 +155,7 @@ class ZipImporter {
 
     final List<String> savedPhotoPaths = [];
     final List<String> savedAudioPaths = [];
+    final List<String> savedVideoPaths = [];
 
     for (int i = 0; i < recordData.photoPaths.length; i++) {
       final relativePath = recordData.photoPaths[i];
@@ -175,13 +183,27 @@ class ZipImporter {
       }
     }
 
-    return [...savedPhotoPaths, ...savedAudioPaths];
+    for (int i = 0; i < recordData.videoPaths.length; i++) {
+      final relativePath = recordData.videoPaths[i];
+      final archiveFile = fileMap[relativePath];
+      if (archiveFile != null) {
+        final ext = relativePath.split('.').last;
+        final savedPath = await FileStorage.saveVideoBytes(
+          archiveFile.content as List<int>,
+          ext,
+        );
+        savedVideoPaths.add(savedPath);
+      }
+    }
+
+    return [...savedPhotoPaths, ...savedAudioPaths, ...savedVideoPaths];
   }
 
   static EpisodeRecord toEpisodeRecord(
     ImportedRecordData data, {
     List<String>? savedPhotoPaths,
     List<String>? savedAudioPaths,
+    List<String>? savedVideoPaths,
   }) {
     return EpisodeRecord(
       occurredAt: data.occurredAt,
@@ -190,6 +212,7 @@ class ZipImporter {
       photoPaths: savedPhotoPaths ?? data.photoPaths,
       audioPaths: savedAudioPaths ?? data.audioPaths,
       audioDurationsSec: data.audioDurationsSec,
+      videoPaths: savedVideoPaths ?? data.videoPaths,
       thingNameId: data.thingNameId,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
