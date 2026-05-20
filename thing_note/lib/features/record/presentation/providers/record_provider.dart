@@ -19,7 +19,7 @@ final reminderRecordsProvider = FutureProvider<List<EpisodeRecord>>((ref) async 
 });
 
 final recordDetailProvider =
-    FutureProvider.family<EpisodeRecord?, int>((ref, id) {
+    FutureProvider.family<EpisodeRecord?, int>((ref, id) async {
   final repo = ref.watch(recordRepositoryProvider);
   return repo.getById(id);
 });

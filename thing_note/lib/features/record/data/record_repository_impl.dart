@@ -23,34 +23,46 @@ class RecordRepositoryImpl implements RecordRepository {
   }
 
   EpisodeRecord _fromMap(Map<String, dynamic> map) {
+    final occurredAtStr = map['occurred_at'] as String?;
+    final photoPathsStr = map['photo_paths'] as String?;
+    final audioPathsStr = map['audio_paths'] as String?;
+    final audioDurationsSecStr = map['audio_durations_sec'] as String?;
+    final videoPathsStr = map['video_paths'] as String?;
+    final documentPathsStr = map['document_paths'] as String?;
+    final createdAtStr = map['created_at'] as String?;
+    final updatedAtStr = map['updated_at'] as String?;
+
+    List<String> parseJsonList(String? jsonStr, List<String> defaultValue) {
+      if (jsonStr == null || jsonStr.isEmpty) return defaultValue;
+      try {
+        return List<String>.from(jsonDecode(jsonStr) as List);
+      } catch (_) {
+        return defaultValue;
+      }
+    }
+
     return EpisodeRecord(
       id: map['id'] as int?,
-      occurredAt: DateTime.parse(map['occurred_at'] as String),
+      occurredAt: occurredAtStr != null ? DateTime.parse(occurredAtStr) : DateTime.now(),
       durationSec: map['duration_sec'] as int,
       note: map['note'] as String,
-      photoPaths: List<String>.from(
-        jsonDecode(map['photo_paths'] as String) as List,
-      ),
-      audioPaths: List<String>.from(
-        jsonDecode(map['audio_paths'] as String) as List,
-      ),
+      photoPaths: parseJsonList(photoPathsStr, []),
+      audioPaths: parseJsonList(audioPathsStr, []),
       audioDurationsSec: List<int>.from(
-        jsonDecode(map['audio_durations_sec'] as String) as List,
+        audioDurationsSecStr != null
+            ? (jsonDecode(audioDurationsSecStr) as List)
+            : [],
       ),
-      videoPaths: List<String>.from(
-        jsonDecode(map['video_paths'] as String) as List,
-      ),
-      documentPaths: List<String>.from(
-        jsonDecode(map['document_paths'] as String? ?? '[]') as List,
-      ),
+      videoPaths: parseJsonList(videoPathsStr, []),
+      documentPaths: parseJsonList(documentPathsStr, []),
       thingNameId: map['thing_name_id'] as int?,
       annotationsJson: map['annotations'] as String?,
       hasReminder: (map['has_reminder'] as int?) == 1,
       latitude: map['latitude'] as double?,
       longitude: map['longitude'] as double?,
       address: map['address'] as String?,
-      createdAt: DateTime.parse(map['created_at'] as String),
-      updatedAt: DateTime.parse(map['updated_at'] as String),
+      createdAt: createdAtStr != null ? DateTime.parse(createdAtStr) : DateTime.now(),
+      updatedAt: updatedAtStr != null ? DateTime.parse(updatedAtStr) : DateTime.now(),
     );
   }
 
@@ -122,19 +134,17 @@ class RecordRepositoryImpl implements RecordRepository {
     final db = await _db;
     final record = await getById(id);
     if (record != null) {
+      Future<void> safeDelete(String path) async {
+        try {
+          final file = File(path);
+          if (await file.exists()) await file.delete();
+        } catch (_) {}
+      }
+
       await Future.wait([
-        ...record.photoPaths.map((path) async {
-          final file = File(path);
-          if (await file.exists()) await file.delete();
-        }),
-        ...record.audioPaths.map((path) async {
-          final file = File(path);
-          if (await file.exists()) await file.delete();
-        }),
-        ...record.videoPaths.map((path) async {
-          final file = File(path);
-          if (await file.exists()) await file.delete();
-        }),
+        ...record.photoPaths.map((path) => safeDelete(path)),
+        ...record.audioPaths.map((path) => safeDelete(path)),
+        ...record.videoPaths.map((path) => safeDelete(path)),
       ]);
     }
     await db.delete('episode_records', where: 'id = ?', whereArgs: [id]);
@@ -144,20 +154,19 @@ class RecordRepositoryImpl implements RecordRepository {
   Future<void> deleteAll() async {
     final db = await _db;
     final records = await getAll();
+
+    Future<void> safeDelete(String path) async {
+      try {
+        final file = File(path);
+        if (await file.exists()) await file.delete();
+      } catch (_) {}
+    }
+
     await Future.wait(
       records.expand((record) => [
-        ...record.photoPaths.map((path) async {
-          final file = File(path);
-          if (await file.exists()) await file.delete();
-        }),
-        ...record.audioPaths.map((path) async {
-          final file = File(path);
-          if (await file.exists()) await file.delete();
-        }),
-        ...record.videoPaths.map((path) async {
-          final file = File(path);
-          if (await file.exists()) await file.delete();
-        }),
+        ...record.photoPaths.map((path) => safeDelete(path)),
+        ...record.audioPaths.map((path) => safeDelete(path)),
+        ...record.videoPaths.map((path) => safeDelete(path)),
       ]),
     );
     await db.delete('episode_records');

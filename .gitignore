@@ -82,6 +82,7 @@ app.*.map.json
 # Android repository files
 *.jks
 *.keystore
+key.properties
 
 # iOS repository files
 *.pbxuser
@@ -118,3 +119,8 @@ AndroidManifest.xml
 docs/
 .superpowers/
 .omc/
+.hany/
+
+*.bat
+*.ps1
+.worktrees

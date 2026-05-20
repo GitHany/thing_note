@@ -170,5 +170,22 @@
   "textDocument": "Plain Text",
   "otherDocument": "Other Documents",
   "pickDocumentFailed": "Failed to pick document: {error}",
-  "@pickDocumentFailed": {"placeholders": {"error": {"type": "String"}}}
+  "@pickDocumentFailed": {"placeholders": {"error": {"type": "String"}}},
+  "backupPassword": "Backup Password",
+  "noPasswordSetDesc": "Set a password to automatically encrypt backups",
+  "enableEncryption": "Enable Encryption",
+  "encryptionEnabledDesc": "Backups will be encrypted when exporting",
+  "encryptionDisabledDesc": "Backups will not be encrypted when exporting",
+  "generatePassword": "Generate Password",
+  "customPassword": "Custom Password",
+  "copyPassword": "Copy Password",
+  "passwordStrength": "Strength",
+  "changePassword": "Change Password",
+  "resetPassword": "Reset Password",
+  "passwordCopied": "Password copied to clipboard",
+  "confirmResetPassword": "Confirm Reset Password",
+  "confirmResetPasswordDesc": "Are you sure you want to reset the password? A new password will be generated.",
+  "setCustomPassword": "Set Custom Password",
+  "password": "Password",
+  "enterPasswordHint": "Enter password"
 }

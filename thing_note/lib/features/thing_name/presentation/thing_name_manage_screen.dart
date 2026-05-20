@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:thing_note/app/theme/app_theme.dart';
 import 'package:thing_note/features/thing_name/domain/thing_name.dart';
 import 'package:thing_note/features/thing_name/presentation/providers/thing_name_provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -216,10 +217,18 @@ class _ThingNameManageScreenState extends ConsumerState<ThingNameManageScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.category_outlined,
-                    size: 80,
-                    color: Theme.of(context).colorScheme.outline,
+                  Container(
+                    width: 140,
+                    height: 140,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.folder_special_outlined,
+                      size: 96,
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -248,24 +257,25 @@ class _ThingNameManageScreenState extends ConsumerState<ThingNameManageScreen> {
               final thingName = thingNames[index];
               final isSelected = thingName.id != null && _selectedIds.contains(thingName.id);
               
-              return InkWell(
-                onTap: _isMultiSelectMode && thingName.id != null
-                    ? () => _toggleSelect(thingName.id!)
-                    : () => context.push('/settings/thing-names/${thingName.id}'),
-                onLongPress: thingName.id != null
-                    ? () {
-                        setState(() {
-                          _isMultiSelectMode = true;
-                          _selectedIds.add(thingName.id!);
-                        });
-                      }
-                    : null,
-                child: Container(
-                  decoration: isSelected
-                      ? BoxDecoration(
-                          color: Theme.of(context).colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(8),
-                        )
+              return Container(
+                decoration: isSelected
+                    ? AppTheme.softCardDecoration(
+                        context,
+                        color: Theme.of(context).colorScheme.primaryContainer,
+                      )
+                    : AppTheme.softCardDecoration(context),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: _isMultiSelectMode && thingName.id != null
+                      ? () => _toggleSelect(thingName.id!)
+                      : () => context.push('/settings/thing-names/${thingName.id}'),
+                  onLongPress: thingName.id != null
+                      ? () {
+                          setState(() {
+                            _isMultiSelectMode = true;
+                            _selectedIds.add(thingName.id!);
+                          });
+                        }
                       : null,
                   child: ListTile(
                     title: Text(thingName.name),
@@ -288,6 +298,9 @@ class _ThingNameManageScreenState extends ConsumerState<ThingNameManageScreen> {
       floatingActionButton: _isMultiSelectMode
           ? null
           : FloatingActionButton(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               onPressed: _showAddDialog,
               child: const Icon(Icons.add),
             ),

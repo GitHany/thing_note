@@ -79,14 +79,18 @@ final databaseProvider = FutureProvider<Database>((ref) async {
         try {
           await db.execute(
               'ALTER TABLE episode_records ADD COLUMN thing_name_id INTEGER');
-        } catch (_) {}
+        } catch (e) {
+          print('Schema upgrade v1->v2 failed: $e');
+        }
       }
 
       if (oldVersion < 3) {
         try {
           await db.execute(
               'ALTER TABLE episode_records ADD COLUMN photo_paths TEXT NOT NULL DEFAULT \'[]\'');
-        } catch (_) {}
+        } catch (e) {
+          print('Schema upgrade v2->v3 failed: $e');
+        }
       }
 
       if (oldVersion < 4) {
@@ -98,7 +102,9 @@ final databaseProvider = FutureProvider<Database>((ref) async {
         try {
           await db.execute(
               'ALTER TABLE episode_records ADD COLUMN audio_durations_sec TEXT NOT NULL DEFAULT \'[]\'');
-        } catch (_) {}
+        } catch (e) {
+          print('Schema upgrade v3->v4 audio_durations_sec failed: $e');
+        }
 
         try {
           final rows = await db.query('episode_records',
@@ -106,8 +112,8 @@ final databaseProvider = FutureProvider<Database>((ref) async {
 
           for (final row in rows) {
             final id = row['id'];
-            final audioPath = row['audio_path'];
-            final audioDurationSec = row['audio_duration_sec'];
+            final audioPath = row['audio_path'] as String?;
+            final audioDurationSec = row['audio_duration_sec'] as int?;
 
             final audioPaths =
                 audioPath != null ? '["$audioPath"]' : '[]';
@@ -124,24 +130,32 @@ final databaseProvider = FutureProvider<Database>((ref) async {
               whereArgs: [id],
             );
           }
-        } catch (_) {}
+        } catch (e) {
+          print('Schema upgrade v3->v4 audio migration failed: $e');
+        }
 
         try {
           await db.execute(
               'ALTER TABLE episode_records DROP COLUMN audio_path');
-        } catch (_) {}
+        } catch (e) {
+          print('Schema upgrade v3->v4 DROP audio_path failed: $e');
+        }
 
         try {
           await db.execute(
               'ALTER TABLE episode_records DROP COLUMN audio_duration_sec');
-        } catch (_) {}
+        } catch (e) {
+          print('Schema upgrade v3->v4 DROP audio_duration_sec failed: $e');
+        }
       }
 
       if (oldVersion < 5) {
         try {
           await db.execute(
               'ALTER TABLE episode_records ADD COLUMN annotations TEXT');
-        } catch (_) {}
+        } catch (e) {
+          print('Schema upgrade v4->v5 failed: $e');
+        }
       }
 
       if (oldVersion < 6) {
@@ -161,46 +175,62 @@ final databaseProvider = FutureProvider<Database>((ref) async {
         try {
           await db.execute(
               'ALTER TABLE reminders ADD COLUMN calendar_event_id TEXT');
-        } catch (_) {}
+        } catch (e) {
+          print('Schema upgrade v6->v7 failed: $e');
+        }
       }
 
       if (oldVersion < 8) {
         try {
           await db.execute(
               'ALTER TABLE episode_records ADD COLUMN has_reminder INTEGER NOT NULL DEFAULT 0');
-        } catch (_) {}
+        } catch (e) {
+          print('Schema upgrade v7->v8 has_reminder failed: $e');
+        }
         try {
           await db.execute('DROP TABLE IF EXISTS reminders');
-        } catch (_) {}
+        } catch (e) {
+          print('Schema upgrade v7->v8 DROP reminders failed: $e');
+        }
       }
 
       if (oldVersion < 9) {
         try {
           await db.execute(
               'ALTER TABLE episode_records ADD COLUMN latitude REAL');
-        } catch (_) {}
+        } catch (e) {
+          print('Schema upgrade v8->v9 latitude failed: $e');
+        }
         try {
           await db.execute(
               'ALTER TABLE episode_records ADD COLUMN longitude REAL');
-        } catch (_) {}
+        } catch (e) {
+          print('Schema upgrade v8->v9 longitude failed: $e');
+        }
         try {
           await db.execute(
               'ALTER TABLE episode_records ADD COLUMN address TEXT');
-        } catch (_) {}
+        } catch (e) {
+          print('Schema upgrade v8->v9 address failed: $e');
+        }
       }
 
       if (oldVersion < 10) {
         try {
           await db.execute(
               'ALTER TABLE episode_records ADD COLUMN video_paths TEXT NOT NULL DEFAULT \'[]\'');
-        } catch (_) {}
+        } catch (e) {
+          print('Schema upgrade v9->v10 failed: $e');
+        }
       }
 
       if (oldVersion < 11) {
         try {
           await db.execute(
               'ALTER TABLE episode_records ADD COLUMN document_paths TEXT NOT NULL DEFAULT \'[]\'');
-        } catch (_) {}
+        } catch (e) {
+          print('Schema upgrade v10->v11 failed: $e');
+        }
       }
     },
   );

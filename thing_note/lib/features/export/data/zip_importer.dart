@@ -116,11 +116,11 @@ class ZipImporter {
     final videosDir = '$folderPath/videos/';
 
     for (final file in archive.files) {
-      if (file.name.startsWith(photosDir) && !file.isFile) {
+      if (file.name.startsWith(photosDir) && file.name != photosDir && file.isFile) {
         photoPaths.add(file.name);
-      } else if (file.name.startsWith(audiosDir) && !file.isFile) {
+      } else if (file.name.startsWith(audiosDir) && file.name != audiosDir && file.isFile) {
         audioPaths.add(file.name);
-      } else if (file.name.startsWith(videosDir) && !file.isFile) {
+      } else if (file.name.startsWith(videosDir) && file.name != videosDir && file.isFile) {
         videoPaths.add(file.name);
       }
     }

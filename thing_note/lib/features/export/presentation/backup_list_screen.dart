@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
 import 'package:thing_note/features/export/presentation/providers/export_import_provider.dart';
+import 'package:archive/archive.dart';
 
 class BackupListScreen extends ConsumerStatefulWidget {
   const BackupListScreen({super.key});
@@ -17,6 +18,105 @@ class BackupListScreen extends ConsumerStatefulWidget {
 class _BackupListScreenState extends ConsumerState<BackupListScreen> {
   final Set<String> _selectedPaths = {};
   bool _isMultiSelectMode = false;
+
+  Future<List<Map<String, dynamic>>> _getZipContents(String zipPath) async {
+    try {
+      final bytes = await File(zipPath).readAsBytes();
+      final archive = ZipDecoder().decodeBytes(bytes);
+      final contents = <Map<String, dynamic>>[];
+      for (final file in archive) {
+        contents.add({
+          'name': file.name,
+          'isFile': file.isFile,
+          'size': file.size,
+        });
+      }
+      return contents;
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<void> _previewZipFile(BuildContext context, File file) async {
+    final contents = await _getZipContents(file.path);
+    if (!context.mounted) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.3,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (_, scrollController) => Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  const Icon(Icons.archive),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          p.basename(file.path),
+                          style: Theme.of(ctx).textTheme.titleMedium,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          '${contents.length} items',
+                          style: Theme.of(ctx).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.share),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      Share.shareXFiles([XFile(file.path)], text: AppLocalizations.of(context)!.shareBackup(1));
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: contents.isEmpty
+                  ? Center(
+                      child: Text(
+                        AppLocalizations.of(context)!.loadFailed('Failed to read archive'),
+                        style: TextStyle(color: Theme.of(ctx).colorScheme.error),
+                      ),
+                    )
+                  : ListView.builder(
+                      controller: scrollController,
+                      itemCount: contents.length,
+                      itemBuilder: (_, index) {
+                        final item = contents[index];
+                        final icon = item['isFile'] ? Icons.insert_drive_file : Icons.folder;
+                        final sizeStr = item['isFile'] ? _formatFileSize(item['size']) : '';
+                        return ListTile(
+                          leading: Icon(icon),
+                          title: Text(
+                            item['name'],
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          trailing: sizeStr.isNotEmpty ? Text(sizeStr, style: Theme.of(ctx).textTheme.bodySmall) : null,
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   void _toggleSelect(String path) {
     setState(() {
@@ -207,7 +307,7 @@ class _BackupListScreenState extends ConsumerState<BackupListScreen> {
                 return InkWell(
                   onTap: _isMultiSelectMode
                       ? () => _toggleSelect(file.path)
-                      : null,
+                      : () => _previewZipFile(context, file),
                   onLongPress: _isMultiSelectMode
                       ? null
                       : () {
@@ -233,6 +333,12 @@ class _BackupListScreenState extends ConsumerState<BackupListScreen> {
                       subtitle: Text(
                         '${_formatFileSize(stat.size)}  ·  ${DateFormat('yyyy-MM-dd HH:mm').format(stat.modified)}',
                       ),
+                      trailing: _isMultiSelectMode
+                          ? null
+                          : Icon(
+                              Icons.expand_more,
+                              color: Theme.of(context).colorScheme.outline,
+                            ),
                     ),
                   ),
                 );

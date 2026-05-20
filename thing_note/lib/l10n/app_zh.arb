@@ -183,5 +183,22 @@
   "textDocument": "纯文本",
   "otherDocument": "其他文档",
   "pickDocumentFailed": "选择文档失败: {error}",
-  "@pickDocumentFailed": {"placeholders": {"error": {"type": "String"}}}
+  "@pickDocumentFailed": {"placeholders": {"error": {"type": "String"}}},
+  "backupPassword": "备份密码",
+  "noPasswordSetDesc": "设置密码后，导出的备份将自动加密",
+  "enableEncryption": "启用加密",
+  "encryptionEnabledDesc": "导出时将对备份进行加密",
+  "encryptionDisabledDesc": "导出时不对备份进行加密",
+  "generatePassword": "生成密码",
+  "customPassword": "自定义密码",
+  "copyPassword": "复制密码",
+  "passwordStrength": "密码强度",
+  "changePassword": "修改密码",
+  "resetPassword": "重置密码",
+  "passwordCopied": "密码已复制到剪贴板",
+  "confirmResetPassword": "确认重置密码",
+  "confirmResetPasswordDesc": "确定要重置密码吗？新密码将自动生成并覆盖旧密码。",
+  "setCustomPassword": "设置自定义密码",
+  "password": "密码",
+  "enterPasswordHint": "请输入密码"
 }

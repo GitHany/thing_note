@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:thing_note/app/theme/app_theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:thing_note/core/utils/date_formatter.dart';
@@ -221,27 +222,28 @@ class RecordDetailScreen extends ConsumerWidget {
     required String title,
     required Widget child,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 18, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(width: 8),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Padding(
-          padding: const EdgeInsets.only(left: 26),
-          child: child,
-        ),
-      ],
+    return Container(
+      decoration: AppTheme.sectionDecoration(context),
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 18, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          child,
+        ],
+      ),
     );
   }
 
@@ -266,7 +268,7 @@ class RecordDetailScreen extends ConsumerWidget {
           return GestureDetector(
             onTap: () => _showFullScreenImage(context, record.photoPaths, index),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               child: Image.file(
                 File(record.photoPaths[index]),
                 width: double.infinity,
@@ -308,14 +310,14 @@ class RecordDetailScreen extends ConsumerWidget {
           width: 88,
           height: 88,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
           ),
           child: Material(
             color: Colors.transparent,
             child: InkWell(
               onTap: () => _openVideo(context, path),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -328,7 +330,7 @@ class RecordDetailScreen extends ConsumerWidget {
                   Text(
                     '${AppLocalizations.of(context)!.videos} ${index + 1}',
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: Theme.of(context).colorScheme.outline,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                   ),
                 ],
@@ -369,7 +371,10 @@ class RecordDetailScreen extends ConsumerWidget {
               if (ctx.mounted) Navigator.pop(ctx);
               if (context.mounted) Navigator.pop(context);
             },
-            child: Text(AppLocalizations.of(ctx)!.delete),
+            child: Text(
+              AppLocalizations.of(ctx)!.delete,
+              style: TextStyle(color: Theme.of(ctx).colorScheme.error),
+            ),
           ),
         ],
       ),

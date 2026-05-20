@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:thing_note/app/theme/app_theme.dart';
 import 'package:thing_note/app/theme/locale_provider.dart';
 import 'package:thing_note/app/theme/theme_provider.dart';
 import 'package:thing_note/features/record/data/record_repository_impl.dart';
@@ -24,46 +25,66 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         title: Text(AppLocalizations.of(context)!.settings),
       ),
       body: ListView(
+        padding: const EdgeInsets.all(16),
         children: [
-          ListTile(
-            leading: const Icon(Icons.palette),
-            title: Text(AppLocalizations.of(context)!.themeMode),
-            subtitle: Text(_themeModeLabel(context, themeMode)),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => _showThemePicker(context, ref, themeMode),
-          ),
-          ListTile(
-            leading: const Icon(Icons.language),
-            title: Text(AppLocalizations.of(context)!.language),
-            subtitle: Text(_localeLabel(context, ref)),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => _showLocalePicker(context, ref),
-          ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.folder_zip),
-            title: Text(AppLocalizations.of(context)!.viewBackupZips),
-            subtitle: Text(AppLocalizations.of(context)!.viewBackupZipsDesc),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/settings/backups'),
-          ),
-          const Divider(),
-          ListTile(
-            leading: Icon(
-              Icons.delete_forever,
-              color: Theme.of(context).colorScheme.error,
+          Container(
+            decoration: AppTheme.softCardDecoration(context),
+            child: Column(
+              children: [
+                ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  leading: const Icon(Icons.brightness_6),
+                  title: Text(AppLocalizations.of(context)!.themeMode),
+                  subtitle: Text(_themeModeLabel(context, themeMode)),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _showThemePicker(context, ref, themeMode),
+                ),
+                ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  leading: const Icon(Icons.language),
+                  title: Text(AppLocalizations.of(context)!.language),
+                  subtitle: Text(_localeLabel(context, ref)),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _showLocalePicker(context, ref),
+                ),
+              ],
             ),
-            title: Text(
-              AppLocalizations.of(context)!.clearAllData,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-            onTap: () => _showClearDataDialog(context, ref),
           ),
-          const Divider(),
-          const SizedBox(height: 32),
+          const SizedBox(height: 12),
+          Container(
+            decoration: AppTheme.softCardDecoration(context),
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              leading: const Icon(Icons.folder_zip),
+              title: Text(AppLocalizations.of(context)!.viewBackupZips),
+              subtitle: Text(AppLocalizations.of(context)!.viewBackupZipsDesc),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/settings/backups'),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            decoration: AppTheme.softCardDecoration(
+              context,
+              color: Theme.of(context).colorScheme.errorContainer.withOpacity(0.1),
+            ),
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              leading: Icon(
+                Icons.delete_forever,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              title: Text(
+                AppLocalizations.of(context)!.clearAllData,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+              onTap: () => _showClearDataDialog(context, ref),
+            ),
+          ),
+          const SizedBox(height: 48),
           Center(
             child: Text(
-              AppLocalizations.of(context)!.version('0.0.5'),
+              AppLocalizations.of(context)!.version('0.0.6'),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.outline,
                   ),

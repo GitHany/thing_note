@@ -114,7 +114,7 @@ class _DocumentPickerSectionState extends State<DocumentPickerSection> {
     try {
       final extensions = type.extensions;
       final result = await FilePicker.platform.pickFiles(
-        type: FilePicker.custom,
+        type: FileType.custom,
         allowedExtensions: extensions.map((e) => e.replaceFirst('.', '')).toList(),
         allowMultiple: true,
       );
@@ -229,13 +229,13 @@ class _DocumentPickerSectionState extends State<DocumentPickerSection> {
                           Icon(
                             Icons.add,
                             size: 18,
-                            color: Theme.of(context).colorScheme.outline,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                           const SizedBox(width: 8),
                           Text(
                             AppLocalizations.of(context)!.addDocument,
                             style: TextStyle(
-                              color: Theme.of(context).colorScheme.outline,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                         ],

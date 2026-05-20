@@ -11,6 +11,7 @@ class ExportImportState {
   final bool isImporting;
   final String statusMessage;
   final String? error;
+  final List<String> logs;
 
   const ExportImportState({
     this.progress = 0.0,
@@ -18,6 +19,7 @@ class ExportImportState {
     this.isImporting = false,
     this.statusMessage = '',
     this.error,
+    this.logs = const [],
   });
 
   ExportImportState copyWith({
@@ -26,6 +28,7 @@ class ExportImportState {
     bool? isImporting,
     String? statusMessage,
     String? error,
+    List<String>? logs,
   }) {
     return ExportImportState(
       progress: progress ?? this.progress,
@@ -33,12 +36,15 @@ class ExportImportState {
       isImporting: isImporting ?? this.isImporting,
       statusMessage: statusMessage ?? this.statusMessage,
       error: error,
+      logs: logs ?? this.logs,
     );
   }
 }
 
 class ExportImportNotifier extends StateNotifier<ExportImportState> {
-  ExportImportNotifier() : super(const ExportImportState());
+  final Ref _ref;
+  
+  ExportImportNotifier(this._ref) : super(const ExportImportState());
 
   Future<File?> exportRecords({
     required List<EpisodeRecord> records,
@@ -51,6 +57,7 @@ class ExportImportNotifier extends StateNotifier<ExportImportState> {
       progress: 0.0,
       statusMessage: '正在准备导出...',
       error: null,
+      logs: [],
     );
 
     try {
@@ -58,12 +65,20 @@ class ExportImportNotifier extends StateNotifier<ExportImportState> {
         records: records,
         thingNames: thingNames,
         onProgress: (current, total) {
+          final percent = total > 0 ? (current / total * 100).toStringAsFixed(0) : '0';
           state = state.copyWith(
-            progress: current / total,
-            statusMessage: '正在导出: $current / $total',
+            progress: total > 0 ? current / total : 0.0,
+            statusMessage: '正在导出: $percent%',
+          );
+        },
+        onLog: (log) {
+          state = state.copyWith(
+            logs: [...state.logs, log],
           );
         },
       );
+
+      _ref.invalidate(backupZipListProvider);
 
       state = state.copyWith(
         isExporting: false,
@@ -89,7 +104,7 @@ class ExportImportNotifier extends StateNotifier<ExportImportState> {
 
 final exportImportNotifierProvider =
     StateNotifierProvider<ExportImportNotifier, ExportImportState>((ref) {
-  return ExportImportNotifier();
+  return ExportImportNotifier(ref);
 });
 
 Future<Directory> _getExportedZipsDir() async {

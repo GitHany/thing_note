@@ -198,11 +198,15 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                     children: [
                       Text(
                         DurationFormatter.format(_position),
-                        style: Theme.of(context).textTheme.labelSmall,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
                       ),
                       Text(
                         DurationFormatter.format(_duration),
-                        style: Theme.of(context).textTheme.labelSmall,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
                       ),
                     ],
                   ),

@@ -15,6 +15,7 @@ import 'package:thing_note/features/record/presentation/providers/record_provide
 import 'package:thing_note/features/record/presentation/widgets/timer_widget.dart';
 import 'package:thing_note/features/record/presentation/widgets/note_input.dart';
 import 'package:thing_note/features/thing_name/domain/thing_name.dart';
+import 'package:thing_note/app/theme/app_theme.dart';
 import 'package:thing_note/features/thing_name/presentation/providers/thing_name_provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
@@ -395,122 +396,160 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.calendar_today),
-                title: Text(AppLocalizations.of(context)!.occurredAt),
-                subtitle: Text(
-                  DateFormat('yyyy-MM-dd HH:mm').format(_occurredAt),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: AppTheme.softCardDecoration(context),
+                child: Column(
+                  children: [
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.calendar_today),
+                      title: Text(AppLocalizations.of(context)!.occurredAt),
+                      subtitle: Text(
+                        DateFormat('yyyy-MM-dd HH:mm').format(_occurredAt),
+                      ),
+                      onTap: () => _pickDateTime(),
+                    ),
+                    thingNamesAsync.when(
+                      loading: () => ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.category),
+                        title: Text(AppLocalizations.of(context)!.thingName),
+                        subtitle: Text(AppLocalizations.of(context)!.loading),
+                      ),
+                      error: (error, stack) => ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.category),
+                        title: Text(AppLocalizations.of(context)!.thingName),
+                        subtitle: Text(AppLocalizations.of(context)!.loadFailed(error.toString())),
+                      ),
+                      data: (thingNames) {
+                        ThingName? selectedName;
+                        for (final name in thingNames) {
+                          if (name.id == _thingNameId) {
+                            selectedName = name;
+                            break;
+                          }
+                        }
+                        return ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(Icons.category),
+                          title: Text(AppLocalizations.of(context)!.thingName),
+                          subtitle: Text(selectedName?.name ?? AppLocalizations.of(context)!.pleaseSelect),
+                          onTap: () => _showThingNamePicker(thingNames),
+                        );
+                      },
+                    ),
+                  ],
                 ),
-                onTap: () => _pickDateTime(),
               ),
-              const SizedBox(height: 8),
-              thingNamesAsync.when(
-                loading: () => ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.category),
-                  title: Text(AppLocalizations.of(context)!.thingName),
-                  subtitle: Text(AppLocalizations.of(context)!.loading),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: AppTheme.softCardDecoration(context),
+                child: TimerWidget(
+                  initialDuration: Duration(seconds: _durationSec),
+                  onDurationChanged: (duration) {
+                    setState(() => _durationSec = duration.inSeconds);
+                    _checkChanged();
+                  },
                 ),
-                error: (error, stack) => ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.category),
-                  title: Text(AppLocalizations.of(context)!.thingName),
-                  subtitle: Text(AppLocalizations.of(context)!.loadFailed(error.toString())),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: AppTheme.softCardDecoration(context),
+                child: Column(
+                  children: [
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      secondary: const Icon(Icons.alarm),
+                      title: Text(AppLocalizations.of(context)!.reminder),
+                      value: _hasReminder,
+                      onChanged: (value) {
+                        setState(() => _hasReminder = value);
+                        _checkChanged();
+                      },
+                    ),
+                    _LocationPicker(
+                      address: _address,
+                      isLocating: _isLocating,
+                      onGetCurrentLocation: _getCurrentLocation,
+                      onManualInput: _showManualInputDialog,
+                      onClear: () {
+                        setState(() {
+                          _latitude = null;
+                          _longitude = null;
+                          _address = null;
+                        });
+                        _checkChanged();
+                      },
+                    ),
+                  ],
                 ),
-                data: (thingNames) {
-                  ThingName? selectedName;
-                  for (final name in thingNames) {
-                    if (name.id == _thingNameId) {
-                      selectedName = name;
-                      break;
-                    }
-                  }
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.category),
-                    title: Text(AppLocalizations.of(context)!.thingName),
-                    subtitle: Text(selectedName?.name ?? AppLocalizations.of(context)!.pleaseSelect),
-                    onTap: () => _showThingNamePicker(thingNames),
-                  );
-                },
-              ),
-              const SizedBox(height: 8),
-              TimerWidget(
-                initialDuration: Duration(seconds: _durationSec),
-                onDurationChanged: (duration) {
-                  setState(() => _durationSec = duration.inSeconds);
-                  _checkChanged();
-                },
               ),
               const SizedBox(height: 16),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                secondary: const Icon(Icons.alarm),
-                title: Text(AppLocalizations.of(context)!.reminder),
-                value: _hasReminder,
-                onChanged: (value) {
-                  setState(() => _hasReminder = value);
-                  _checkChanged();
-                },
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: AppTheme.softCardDecoration(context),
+                child: PhotoPickerSection(
+                  initialPaths: _photoPaths,
+                  onPathsChanged: (paths) {
+                    setState(() => _photoPaths = paths);
+                    _checkChanged();
+                  },
+                ),
               ),
               const SizedBox(height: 16),
-              _LocationPicker(
-                address: _address,
-                isLocating: _isLocating,
-                onGetCurrentLocation: _getCurrentLocation,
-                onManualInput: _showManualInputDialog,
-                onClear: () {
-                  setState(() {
-                    _latitude = null;
-                    _longitude = null;
-                    _address = null;
-                  });
-                  _checkChanged();
-                },
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: AppTheme.softCardDecoration(context),
+                child: VideoPickerSection(
+                  initialPaths: _videoPaths,
+                  onPathsChanged: (paths) {
+                    setState(() => _videoPaths = paths);
+                    _checkChanged();
+                  },
+                ),
               ),
               const SizedBox(height: 16),
-              PhotoPickerSection(
-                initialPaths: _photoPaths,
-                onPathsChanged: (paths) {
-                  setState(() => _photoPaths = paths);
-                  _checkChanged();
-                },
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: AppTheme.softCardDecoration(context),
+                child: AudioRecorderSection(
+                  key: _audioRecorderKey,
+                  initialAudioPaths: _audioPaths,
+                  initialAudioDurationsSec: _audioDurationsSec,
+                  onAudioChanged: (paths, durationsSec) {
+                    setState(() {
+                      _audioPaths = paths;
+                      _audioDurationsSec = durationsSec;
+                    });
+                    _checkChanged();
+                  },
+                  onRecordingStateChanged: (isRecording) {
+                    setState(() => _isRecording = isRecording);
+                  },
+                ),
               ),
               const SizedBox(height: 16),
-              VideoPickerSection(
-                initialPaths: _videoPaths,
-                onPathsChanged: (paths) {
-                  setState(() => _videoPaths = paths);
-                  _checkChanged();
-                },
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: AppTheme.softCardDecoration(context),
+                child: DocumentPickerSection(
+                  initialPaths: _documentPaths,
+                  onPathsChanged: (paths) {
+                    setState(() => _documentPaths = paths);
+                    _checkChanged();
+                  },
+                ),
               ),
               const SizedBox(height: 16),
-              AudioRecorderSection(
-                key: _audioRecorderKey,
-                initialAudioPaths: _audioPaths,
-                initialAudioDurationsSec: _audioDurationsSec,
-                onAudioChanged: (paths, durationsSec) {
-                  setState(() {
-                    _audioPaths = paths;
-                    _audioDurationsSec = durationsSec;
-                  });
-                  _checkChanged();
-                },
-                onRecordingStateChanged: (isRecording) {
-                  setState(() => _isRecording = isRecording);
-                },
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: AppTheme.softCardDecoration(context),
+                child: NoteInput(controller: _noteController),
               ),
-              const SizedBox(height: 16),
-              DocumentPickerSection(
-                initialPaths: _documentPaths,
-                onPathsChanged: (paths) {
-                  setState(() => _documentPaths = paths);
-                  _checkChanged();
-                },
-              ),
-              const SizedBox(height: 16),
-              NoteInput(controller: _noteController),
             ],
           ),
         ),
@@ -714,19 +753,15 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
       Position? position;
       try {
         position = await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.medium,
-            timeLimit: Duration(seconds: 10),
-          ),
+          desiredAccuracy: LocationAccuracy.medium,
+          timeLimit: Duration(seconds: 10),
         );
       } catch (e) {
         position = await Geolocator.getLastKnownPosition();
         if (position == null) {
           position = await Geolocator.getCurrentPosition(
-            locationSettings: const LocationSettings(
-              accuracy: LocationAccuracy.low,
-              timeLimit: Duration(seconds: 10),
-            ),
+            desiredAccuracy: LocationAccuracy.low,
+            timeLimit: Duration(seconds: 10),
           );
         }
       }

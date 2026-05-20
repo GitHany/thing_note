@@ -34,14 +34,14 @@ class _RecordListScreenState extends ConsumerState<RecordListScreen> {
 
   Widget _buildShimmerLoading() {
     return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!,
-      highlightColor: Colors.grey[100]!,
+      baseColor: const Color(0xFFD7C4A8),
+      highlightColor: const Color(0xFFF0E4D4),
       child: ListView.builder(
-        padding: const EdgeInsets.only(bottom: 80),
+        padding: const EdgeInsets.only(bottom: 80, left: 16, right: 16),
         itemCount: 5,
         itemBuilder: (context, index) {
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.only(bottom: 8),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -50,7 +50,7 @@ class _RecordListScreenState extends ConsumerState<RecordListScreen> {
                   height: 48,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -61,13 +61,19 @@ class _RecordListScreenState extends ConsumerState<RecordListScreen> {
                       Container(
                         width: double.infinity,
                         height: 16,
-                        color: Colors.white,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Container(
                         width: 150,
                         height: 12,
-                        color: Colors.white,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
                       ),
                     ],
                   ),
@@ -155,13 +161,50 @@ class _RecordListScreenState extends ConsumerState<RecordListScreen> {
             final exportState = ref.watch(exportImportNotifierProvider);
             return AlertDialog(
               title: Text(AppLocalizations.of(ctx)!.exporting),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  LinearProgressIndicator(value: exportState.progress),
-                  const SizedBox(height: 16),
-                  Text(exportState.statusMessage),
-                ],
+              content: SizedBox(
+                width: 400,
+                height: 300,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    LinearProgressIndicator(value: exportState.progress),
+                    const SizedBox(height: 16),
+                    Text(
+                      exportState.statusMessage,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: SingleChildScrollView(
+                          reverse: true,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: exportState.logs.map((log) {
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 4),
+                                child: Text(
+                                  log,
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                        fontFamily: 'monospace',
+                                        color: Theme.of(context).colorScheme.onSurface,
+                                      ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           },
@@ -196,14 +239,14 @@ class _RecordListScreenState extends ConsumerState<RecordListScreen> {
           final reminderRecordsAsync = ref.watch(reminderRecordsProvider);
           final thingNamesAsync = ref.watch(thingNameListProvider);
           final thingNames = thingNamesAsync.valueOrNull ?? [];
+          final thingNameMap = {
+            for (final tn in thingNames)
+              if (tn.id != null) tn.id!: tn.name,
+          };
 
           String? resolveThingName(int? thingNameId) {
             if (thingNameId == null) return null;
-            try {
-              return thingNames.firstWhere((tn) => tn.id == thingNameId).name;
-            } catch (_) {
-              return null;
-            }
+            return thingNameMap[thingNameId];
           }
 
           return AlertDialog(
@@ -392,10 +435,18 @@ class _RecordListScreenState extends ConsumerState<RecordListScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
-                              Icons.note_add_outlined,
-                              size: 80,
-                              color: Theme.of(context).colorScheme.outline,
+                            Container(
+                              width: 140,
+                              height: 140,
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.auto_stories_outlined,
+                                size: 96,
+                                color: Theme.of(context).colorScheme.outline,
+                              ),
                             ),
                             const SizedBox(height: 16),
                             Text(
@@ -419,60 +470,64 @@ class _RecordListScreenState extends ConsumerState<RecordListScreen> {
                 );
               }
 
-              final thingNameMap = thingNamesAsync.valueOrNull;
+              final thingNames = thingNamesAsync.valueOrNull ?? [];
+              final thingNameMap = {
+                for (final tn in thingNames)
+                  if (tn.id != null) tn.id!: tn.name,
+              };
+
               String? resolveThingName(int? thingNameId) {
-                if (thingNameId == null || thingNameMap == null) return null;
-                try {
-                  return thingNameMap.firstWhere((tn) => tn.id == thingNameId).name;
-                } catch (_) {
-                  return null;
-                }
+                if (thingNameId == null) return null;
+                return thingNameMap[thingNameId];
               }
 
               return ListView.builder(
-                padding: const EdgeInsets.only(bottom: 80),
+                padding: const EdgeInsets.only(bottom: 80, left: 16, right: 16),
                 itemCount: records.length,
                 itemBuilder: (context, index) {
                   final record = records[index];
                   final isSelected = record.id != null && _selectedRecordIds.contains(record.id);
-                  return _AnimatedListItem(
-                    index: index,
-                    child: InkWell(
-                      onTap: _isMultiSelectMode
-                          ? (record.id != null ? () => _toggleSelect(record.id!) : null)
-                          : () => context.push('/record/${record.id}'),
-                      onLongPress: record.id != null
-                          ? () {
-                              setState(() {
-                                _isMultiSelectMode = true;
-                                _selectedRecordIds.add(record.id!);
-                              });
-                            }
-                          : null,
-                      child: Container(
-                        color: isSelected ? Theme.of(context).colorScheme.primaryContainer : null,
-                        child: Stack(
-                          children: [
-                            RecordCard(
-                              record: record,
-                              thingName: resolveThingName(record.thingNameId),
-                              onTap: null,
-                            ),
-                            if (_isMultiSelectMode && record.id != null)
-                              Positioned(
-                                left: 8,
-                                top: 8,
-                                child: Icon(
-                                  isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _AnimatedListItem(
+                      index: index,
+                      child: InkWell(
+                        onTap: _isMultiSelectMode
+                            ? (record.id != null ? () => _toggleSelect(record.id!) : null)
+                            : () => context.push('/record/${record.id}'),
+                        onLongPress: record.id != null
+                            ? () {
+                                setState(() {
+                                  _isMultiSelectMode = true;
+                                  _selectedRecordIds.add(record.id!);
+                                });
+                              }
+                            : null,
+                        child: Container(
+                          color: isSelected ? Theme.of(context).colorScheme.primaryContainer : null,
+                          child: Stack(
+                            children: [
+                              RecordCard(
+                                record: record,
+                                thingName: resolveThingName(record.thingNameId),
+                                onTap: null,
                               ),
-                          ],
+                              if (_isMultiSelectMode && record.id != null)
+                                Positioned(
+                                  left: 8,
+                                  top: 8,
+                                  child: Icon(
+                                    isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+                                    color: Theme.of(context).colorScheme.primary,
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   );
-                },
+              },
               );
             },
           ),
@@ -571,6 +626,7 @@ class _AnimatedFabState extends State<_AnimatedFab> {
         curve: Curves.easeInOut,
         child: FloatingActionButton(
           onPressed: widget.onPressed,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: widget.child,
         ),
       ),

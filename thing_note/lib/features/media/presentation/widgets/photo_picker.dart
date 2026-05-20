@@ -105,7 +105,7 @@ class _PhotoPickerSectionState extends ConsumerState<PhotoPickerSection> {
 
   @override
   Widget build(BuildContext context) {
-    const double itemSize = 88.0;
+    const double itemSize = 100.0;
     const double crossAxisSpacing = 8.0;
     const double mainAxisSpacing = 8.0;
     final int rowCount = (_paths.length / 3).ceil();
@@ -572,6 +572,7 @@ class _AddMediaButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -582,7 +583,7 @@ class _AddMediaButton extends StatelessWidget {
           height: 80,
           decoration: BoxDecoration(
             border: Border.all(
-              color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+              color: colorScheme.outline.withOpacity(0.3),
             ),
             borderRadius: BorderRadius.circular(8),
           ),
@@ -592,13 +593,13 @@ class _AddMediaButton extends StatelessWidget {
               Icon(
                 icon,
                 size: 24,
-                color: Theme.of(context).colorScheme.outline,
+                color: colorScheme.onSurface,
               ),
               const SizedBox(height: 4),
               Text(
                 label,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Theme.of(context).colorScheme.outline,
+                      color: colorScheme.onSurface,
                     ),
               ),
             ],
