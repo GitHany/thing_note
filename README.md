@@ -64,6 +64,6 @@
 
 ## 版本
 
-v0.0.5
+v0.0.6
 
 详见 [CHANGELOG.md](./CHANGELOG.md)
