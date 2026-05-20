@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:thing_note/core/utils/file_storage.dart';
 import 'package:thing_note/features/media/presentation/widgets/photo_picker.dart';
 import 'package:thing_note/features/media/presentation/widgets/audio_recorder.dart';
+import 'package:thing_note/features/media/presentation/widgets/document_picker.dart';
 import 'package:thing_note/features/record/domain/episode_record.dart';
 import 'package:thing_note/features/record/presentation/providers/record_provider.dart';
 import 'package:thing_note/features/record/presentation/widgets/timer_widget.dart';
@@ -47,6 +48,7 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
   String? _address;
   bool _isLocating = false;
   List<String> _videoPaths = [];
+  List<String> _documentPaths = [];
 
   DateTime _initialOccurredAt = DateTime.now();
   int _initialDurationSec = 0;
@@ -60,6 +62,7 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
   double? _initialLongitude;
   String? _initialAddress;
   List<String> _initialVideoPaths = [];
+  List<String> _initialDocumentPaths = [];
 
   @override
   void initState() {
@@ -83,6 +86,7 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
           _photoPaths.isNotEmpty ||
           _audioPaths.isNotEmpty ||
           _videoPaths.isNotEmpty ||
+          _documentPaths.isNotEmpty ||
           _thingNameId != null ||
           _hasReminder;
 
@@ -103,6 +107,7 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
         !_listEquals(_photoPaths, _initialPhotoPaths) ||
         !_listEquals(_audioPaths, _initialAudioPaths) ||
         !_listEquals(_videoPaths, _initialVideoPaths) ||
+        !_listEquals(_documentPaths, _initialDocumentPaths) ||
         !_intListEquals(_audioDurationsSec, _initialAudioDurationsSec);
 
     if (changed != _isChanged) {
@@ -170,6 +175,7 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
           _longitude = record.longitude;
           _address = record.address;
           _videoPaths = List.from(record.videoPaths);
+          _documentPaths = List.from(record.documentPaths);
           _initialOccurredAt = record.occurredAt;
           _initialDurationSec = record.durationSec;
           _initialNote = record.note;
@@ -182,6 +188,7 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
           _initialLongitude = record.longitude;
           _initialAddress = record.address;
           _initialVideoPaths = List.from(record.videoPaths);
+          _initialDocumentPaths = List.from(record.documentPaths);
           _isDataLoaded = true;
         });
       }
@@ -273,6 +280,7 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
         audioPaths: savedAudioPaths,
         audioDurationsSec: _audioDurationsSec,
         videoPaths: savedVideoPaths,
+        documentPaths: _documentPaths,
         thingNameId: thingNameId,
         hasReminder: _hasReminder,
         latitude: _latitude,
@@ -491,6 +499,14 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
                 },
                 onRecordingStateChanged: (isRecording) {
                   setState(() => _isRecording = isRecording);
+                },
+              ),
+              const SizedBox(height: 16),
+              DocumentPickerSection(
+                initialPaths: _documentPaths,
+                onPathsChanged: (paths) {
+                  setState(() => _documentPaths = paths);
+                  _checkChanged();
                 },
               ),
               const SizedBox(height: 16),

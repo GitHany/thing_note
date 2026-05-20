@@ -170,5 +170,18 @@
   "fileSize": "文件大小",
   "addAudioFromFile": "从文件选择",
   "pickAudioFailed": "选择音频失败: {error}",
-  "@pickAudioFailed": {"placeholders": {"error": {"type": "String"}}}
+  "@pickAudioFailed": {"placeholders": {"error": {"type": "String"}}},
+  "documents": "文档",
+  "addDocument": "添加文档",
+  "addMoreDocuments": "添加更多",
+  "selectDocumentType": "选择文档类型",
+  "wordDocument": "Word 文档",
+  "excelDocument": "Excel 表格",
+  "pptDocument": "PPT 演示文稿",
+  "pdfDocument": "PDF 文档",
+  "markdownDocument": "Markdown",
+  "textDocument": "纯文本",
+  "otherDocument": "其他文档",
+  "pickDocumentFailed": "选择文档失败: {error}",
+  "@pickDocumentFailed": {"placeholders": {"error": {"type": "String"}}}
 }

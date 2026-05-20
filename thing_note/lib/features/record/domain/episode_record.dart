@@ -7,6 +7,7 @@ class EpisodeRecord {
   final List<String> audioPaths;
   final List<int> audioDurationsSec;
   final List<String> videoPaths;
+  final List<String> documentPaths;
   final int? thingNameId;
   final String? annotationsJson;
   final bool hasReminder;
@@ -25,6 +26,7 @@ class EpisodeRecord {
     this.audioPaths = const [],
     this.audioDurationsSec = const [],
     this.videoPaths = const [],
+    this.documentPaths = const [],
     this.thingNameId,
     this.annotationsJson,
     this.hasReminder = false,
@@ -44,6 +46,7 @@ class EpisodeRecord {
     List<String>? audioPaths,
     List<int>? audioDurationsSec,
     List<String>? videoPaths,
+    List<String>? documentPaths,
     int? thingNameId,
     String? annotationsJson,
     bool? hasReminder,
@@ -62,6 +65,7 @@ class EpisodeRecord {
       audioPaths: audioPaths ?? this.audioPaths,
       audioDurationsSec: audioDurationsSec ?? this.audioDurationsSec,
       videoPaths: videoPaths ?? this.videoPaths,
+      documentPaths: documentPaths ?? this.documentPaths,
       thingNameId: thingNameId ?? this.thingNameId,
       annotationsJson: annotationsJson ?? this.annotationsJson,
       hasReminder: hasReminder ?? this.hasReminder,
@@ -77,6 +81,7 @@ class EpisodeRecord {
   bool get hasPhotos => photoPaths.isNotEmpty;
   bool get hasAudio => audioPaths.isNotEmpty;
   bool get hasVideos => videoPaths.isNotEmpty;
+  bool get hasDocuments => documentPaths.isNotEmpty;
   bool get hasAnnotations =>
       annotationsJson != null &&
       annotationsJson!.isNotEmpty &&

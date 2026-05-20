@@ -157,5 +157,18 @@
   "fileSize": "File Size",
   "addAudioFromFile": "From File",
   "pickAudioFailed": "Failed to pick audio: {error}",
-  "@pickAudioFailed": {"placeholders": {"error": {"type": "String"}}}
+  "@pickAudioFailed": {"placeholders": {"error": {"type": "String"}}},
+  "documents": "Documents",
+  "addDocument": "Add Document",
+  "addMoreDocuments": "Add More",
+  "selectDocumentType": "Select Document Type",
+  "wordDocument": "Word Document",
+  "excelDocument": "Excel Spreadsheet",
+  "pptDocument": "PPT Presentation",
+  "pdfDocument": "PDF Document",
+  "markdownDocument": "Markdown",
+  "textDocument": "Plain Text",
+  "otherDocument": "Other Documents",
+  "pickDocumentFailed": "Failed to pick document: {error}",
+  "@pickDocumentFailed": {"placeholders": {"error": {"type": "String"}}}
 }

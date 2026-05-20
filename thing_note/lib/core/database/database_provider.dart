@@ -8,7 +8,7 @@ final databaseProvider = FutureProvider<Database>((ref) async {
 
   return openDatabase(
     path,
-    version: 10,
+    version: 11,
     onCreate: (db, version) async {
       await db.execute('''
         CREATE TABLE episode_records (
@@ -27,7 +27,8 @@ final databaseProvider = FutureProvider<Database>((ref) async {
           latitude REAL,
           longitude REAL,
           address TEXT,
-          video_paths TEXT NOT NULL DEFAULT '[]'
+          video_paths TEXT NOT NULL DEFAULT '[]',
+          document_paths TEXT NOT NULL DEFAULT '[]'
         )
       ''');
 
@@ -192,6 +193,13 @@ final databaseProvider = FutureProvider<Database>((ref) async {
         try {
           await db.execute(
               'ALTER TABLE episode_records ADD COLUMN video_paths TEXT NOT NULL DEFAULT \'[]\'');
+        } catch (_) {}
+      }
+
+      if (oldVersion < 11) {
+        try {
+          await db.execute(
+              'ALTER TABLE episode_records ADD COLUMN document_paths TEXT NOT NULL DEFAULT \'[]\'');
         } catch (_) {}
       }
     },

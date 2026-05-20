@@ -40,6 +40,9 @@ class RecordRepositoryImpl implements RecordRepository {
       videoPaths: List<String>.from(
         jsonDecode(map['video_paths'] as String) as List,
       ),
+      documentPaths: List<String>.from(
+        jsonDecode(map['document_paths'] as String? ?? '[]') as List,
+      ),
       thingNameId: map['thing_name_id'] as int?,
       annotationsJson: map['annotations'] as String?,
       hasReminder: (map['has_reminder'] as int?) == 1,
@@ -61,6 +64,7 @@ class RecordRepositoryImpl implements RecordRepository {
       'audio_paths': jsonEncode(record.audioPaths),
       'audio_durations_sec': jsonEncode(record.audioDurationsSec),
       'video_paths': jsonEncode(record.videoPaths),
+      'document_paths': jsonEncode(record.documentPaths),
       'thing_name_id': record.thingNameId,
       if (record.annotationsJson != null) 'annotations': record.annotationsJson,
       'has_reminder': record.hasReminder ? 1 : 0,
