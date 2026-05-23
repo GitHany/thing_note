@@ -19,7 +19,7 @@ class AppTheme {
   static ThemeData get darkTheme => _buildTheme(_buildDarkScheme(), Brightness.dark);
 
   static ColorScheme _buildLightScheme() {
-    return ColorScheme(
+    return const ColorScheme(
       brightness: Brightness.light,
       primary: _zinc900,
       onPrimary: Colors.white,
@@ -32,7 +32,7 @@ class AppTheme {
       tertiary: _zinc500,
       onTertiary: Colors.white,
       tertiaryContainer: _zinc100,
-      onTertiaryContainer: _zinc600,
+      onTertiaryContainer: Color(0xFF52525B),
       error: Color(0xFFDC2626),
       onError: Colors.white,
       errorContainer: Color(0xFFFEE2E2),
@@ -49,13 +49,13 @@ class AppTheme {
       outlineVariant: _zinc200,
       inverseSurface: _zinc900,
       onInverseSurface: _zinc100,
-      shadow: Colors.black.withOpacity(0.1),
+      shadow: Color.fromRGBO(0, 0, 0, 0.1),
       scrim: _zinc950,
     );
   }
 
   static ColorScheme _buildDarkScheme() {
-    return ColorScheme(
+    return const ColorScheme(
       brightness: Brightness.dark,
       primary: _zinc100,
       onPrimary: _zinc900,
@@ -68,7 +68,7 @@ class AppTheme {
       tertiary: _zinc400,
       onTertiary: _zinc900,
       tertiaryContainer: _zinc700,
-      onTertiaryContainer: _zinc300,
+      onTertiaryContainer: Color(0xFFFCA5A5),
       error: Color(0xFFFCA5A5),
       onError: Color(0xFF7F1D1D),
       errorContainer: Color(0xFF991B1B),
@@ -85,7 +85,7 @@ class AppTheme {
       outlineVariant: _zinc800,
       inverseSurface: _zinc100,
       onInverseSurface: _zinc900,
-      shadow: Colors.black.withOpacity(0.3),
+      shadow: Color.fromRGBO(0, 0, 0, 0.3),
       scrim: _zinc950,
     );
   }
@@ -122,7 +122,7 @@ class AppTheme {
         shadowColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           side: BorderSide(
             color: colorScheme.outlineVariant,
             width: 1,
@@ -141,7 +141,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
-          textStyle: TextStyle(
+          textStyle: const TextStyle(
             fontFamily: _fontFamily,
             fontWeight: FontWeight.w500,
             fontSize: 14,
@@ -158,7 +158,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
-          textStyle: TextStyle(
+          textStyle: const TextStyle(
             fontFamily: _fontFamily,
             fontWeight: FontWeight.w500,
             fontSize: 14,
@@ -176,7 +176,7 @@ class AppTheme {
           side: BorderSide(
             color: colorScheme.outline,
           ),
-          textStyle: TextStyle(
+          textStyle: const TextStyle(
             fontFamily: _fontFamily,
             fontWeight: FontWeight.w500,
             fontSize: 14,
@@ -191,7 +191,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
-          textStyle: TextStyle(
+          textStyle: const TextStyle(
             fontFamily: _fontFamily,
             fontWeight: FontWeight.w500,
             fontSize: 14,
@@ -275,7 +275,7 @@ class AppTheme {
         backgroundColor: colorScheme.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           side: BorderSide(
             color: colorScheme.outlineVariant,
             width: 1,
@@ -305,7 +305,7 @@ class AppTheme {
       chipTheme: ChipThemeData(
         backgroundColor: colorScheme.surfaceContainerHighest,
         selectedColor: colorScheme.primary,
-        labelStyle: TextStyle(
+        labelStyle: const TextStyle(
           fontFamily: _fontFamily,
           fontSize: 12,
           fontWeight: FontWeight.w500,
@@ -511,5 +511,82 @@ class AppTheme {
         width: 1,
       ),
     );
+  }
+
+  // ============ Shimmer Colors for Loading States ============
+  /// Get shimmer base color based on theme brightness
+  static Color shimmerBaseColor(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    return isLight ? const Color(0xFFE8E8E8) : const Color(0xFF3A3A3A);
+  }
+
+  /// Get shimmer highlight color based on theme brightness
+  static Color shimmerHighlightColor(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    return isLight ? const Color(0xFFF5F5F5) : const Color(0xFF4A4A4A);
+  }
+
+  /// Get shimmer card loading decoration
+  static BoxDecoration shimmerCardDecoration(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    return BoxDecoration(
+      color: isLight ? Colors.white : const Color(0xFF2A2A2A),
+      borderRadius: BorderRadius.circular(12),
+    );
+  }
+
+  // ============ Responsive Layout Helpers ============
+
+  /// Check if current screen width is ultra small (< 320px)
+  static bool isUltraSmallScreen(BuildContext context) {
+    return MediaQuery.of(context).size.width <= 320;
+  }
+
+  /// Check if current screen width is small (< 360px)
+  static bool isSmallScreen(BuildContext context) {
+    return MediaQuery.of(context).size.width <= 360;
+  }
+
+  /// Check if current screen width is medium (< 600px)
+  static bool isMediumScreen(BuildContext context) {
+    return MediaQuery.of(context).size.width <= 600;
+  }
+
+  /// Check if current screen width is large (>= 768px - tablet)
+  static bool isLargeScreen(BuildContext context) {
+    return MediaQuery.of(context).size.width >= 768;
+  }
+
+  /// Check if current screen width is extra large (>= 1200px - desktop)
+  static bool isExtraLargeScreen(BuildContext context) {
+    return MediaQuery.of(context).size.width >= 1200;
+  }
+
+  /// Get responsive horizontal padding
+  static double responsiveHorizontalPadding(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    if (width <= 320) return 12.0;
+    if (width <= 360) return 14.0;
+    if (width <= 600) return 16.0;
+    if (width <= 768) return 20.0;
+    return 24.0;
+  }
+
+  /// Get responsive vertical spacing
+  static double responsiveVerticalSpacing(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    if (width <= 320) return 8.0;
+    if (width <= 360) return 10.0;
+    if (width <= 600) return 14.0;
+    return 16.0;
+  }
+
+  /// Get responsive item spacing
+  static double responsiveItemSpacing(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    if (width <= 320) return 10.0;
+    if (width <= 360) return 12.0;
+    if (width <= 600) return 14.0;
+    return 16.0;
   }
 }

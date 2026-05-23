@@ -1,19 +1,43 @@
 include: package:flutter_lints/flutter.yaml
 
+analyzer:
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "**/*.gr.dart"
+    - "build/**"
+    - "**/*.chunks.dart"
+  errors:
+    invalid_annotation_target: ignore
+    deprecated_member_use: ignore
+
 linter:
   rules:
+    # Style
     prefer_const_constructors: true
     prefer_const_declarations: true
     prefer_final_fields: true
     prefer_final_locals: true
+    prefer_final_in_for_each: true
+
+    # Design
     avoid_print: true
     avoid_unnecessary_containers: true
     sized_box_for_whitespace: true
     use_key_in_widget_constructors: true
 
-analyzer:
-  exclude:
-    - "**/*.g.dart"
-    - "**/*.freezed.dart"
-  errors:
-    invalid_annotation_target: ignore
+    # Correctness
+    prefer_collection_literals: true
+    prefer_single_quotes: true
+
+    # Performance
+    prefer_if_null_operators: true
+    prefer_null_aware_method_calls: true
+    prefer_spread_collections: true
+
+    # Maintainability
+    unnecessary_this: true
+    unnecessary_null_aware_assignments: true
+
+    # Documentation
+    use_build_context_synchronously: true

@@ -1,0 +1,3 @@
+﻿Don't use 'BuildContext's across async gaps
+Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check
+The constant name 'thing_note_backup' isn't a lowerCamelCase identifier

@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:thing_note/app/theme/app_theme.dart';
 import 'package:thing_note/features/thing_name/domain/thing_name.dart';
 import 'package:thing_note/features/thing_name/presentation/providers/thing_name_provider.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:thing_note/l10n/generated/app_localizations.dart';
 
 class ThingNameManageScreen extends ConsumerStatefulWidget {
   const ThingNameManageScreen({super.key});

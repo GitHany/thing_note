@@ -1,0 +1,129 @@
+version: 1
+plan:
+  name: 'thing_note flutter 构建修复'
+  max_concurrency: 3
+  max_consecutive_failures: 1
+  max_cycles: 5
+tasks:
+  - id: fix-import-paths
+    title: '修复 imports'
+    prompt: |
+      在 C:\code\thing_note\thing_note 项目中，有多个文件使用了错误的反斜杠路径分隔符。需要修复以下文件中的 import 语句，将 `\domain\` 替换为 `/domain/`：
+
+      1. lib/features/quick_note/presentation/quick_notes_screen.dart - 已是正斜杠，检查其他错误 import
+      2. lib/features/quick_note/data/quick_note_repository.dart - 已是正斜杠，检查其他错误 import
+      3. lib/features/collection/presentation/collections_screen.dart - 已是正斜杠，检查其他错误 import
+      4. lib/features/collection/data/collection_repository.dart - 已是正斜杠，检查其他错误 import
+
+      先运行 `flutter analyze` 检查是否还有其他错误的 import 路径（如 `\data\` 或其他）。
+      报告所有发现的错误 import。
+    assigned_to: coder
+    verified_by: verifier
+    verify_prompt: '运行 flutter analyze 检查 import 路径错误是否已修复'
+    timeout_ms: 300000
+
+  - id: fix-database-getters
+    title: '修复 Database? 返回类型问题'
+    prompt: |
+      在 C:\code\thing_note\thing_note 项目中，多个 repository 文件的 `_db` getter 返回 `Database?` 但声明返回类型是 `Future<Database>`。
+
+      需要修复的文件：
+      1. lib/features/quick_note/data/quick_note_repository.dart (line 26)
+      2. lib/features/collection/data/collection_repository.dart (line 21)
+      3. lib/features/report/data/report_service.dart (line 12)
+      4. lib/features/reminder_prediction/data/reminder_prediction_service.dart (line 12)
+      5. lib/features/dashboard/data/dashboard_service.dart (line 11)
+      6. lib/features/habit/data/habit_repository.dart (line 26)
+      7. lib/features/importer/data/importer_service.dart (line 14)
+      8. lib/features/mood/data/mood_repository.dart (line 38)
+      9. lib/features/notification_center/data/notification_center_service.dart (line 94)
+      10. lib/features/project/data/project_repository.dart (line 28)
+      11. lib/features/smart_tag/data/smart_tag_service.dart (line 17)
+
+      修复方式：检查 `_db` getter 的实现，确保它正确处理 nullable Database。如果是同步返回 Database?，需要改为 async 或处理 null 情况。
+
+      完成后运行 `flutter analyze` 验证。
+    assigned_to: coder
+    verified_by: verifier
+    verify_prompt: '运行 flutter analyze 检查 Database 相关错误是否已修复'
+    timeout_ms: 300000
+
+  - id: fix-toARGB32
+    title: '修复 toARGB32 Color 方法'
+    prompt: |
+      在 C:\code\thing_note\thing_note 项目中，lib/features/custom_theme/domain/custom_theme_service.dart 使用了 `toARGB32()` 方法，但新版 Flutter 中 Color 类没有这个方法。
+
+      修复方式：将 `color.toARGB32` 替换为 `color.value`。
+
+      需要修复的行 (lib/features/custom_theme/domain/custom_theme_service.dart):
+      - line 29: primaryColor.toARGB32 → primaryColor.value
+      - line 30: secondaryColor.toARGB32 → secondaryColor.value
+      - line 31: backgroundColor.toARGB32 → backgroundColor.value
+      - line 32: surfaceColor.toARGB32 → surfaceColor.value
+      - line 33: textColor.toARGB32 → textColor.value
+      - line 34: accentColor.toARGB32 → accentColor.value
+
+      完成后运行 `flutter analyze` 验证。
+    assigned_to: coder
+    verified_by: verifier
+    verify_prompt: '运行 flutter analyze 检查 toARGB32 错误是否已修复'
+    timeout_ms: 300000
+
+  - id: fix-l10n-addTagsDesc
+    title: '修复 addTagsDesc 本地化缺失'
+    prompt: |
+      在 C:\code\thing_note\thing_note 项目中，lib/features/batch/presentation/batch_operation_screen.dart:129 使用了 `l10n.addTagsDesc`，但 AppLocalizations 中没有这个 getter。
+
+      1. 首先检查 lib/l10n/ 目录下的 ARB 文件（app_en.arb, app_zh.arb 等）
+      2. 如果 addTagsDesc 不存在，添加它到所有 ARB 文件
+      3. 如果存在，检查是否需要重新生成 flutter gen-l10n
+
+      示例添加：
+      "addTagsDesc": "Add tags to selected items"
+
+      完成后运行 `flutter gen-l10n` 然后 `flutter analyze` 验证。
+    assigned_to: coder
+    verified_by: verifier
+    verify_prompt: '运行 flutter analyze 检查 addTagsDesc 错误是否已修复'
+    timeout_ms: 300000
+
+  - id: fix-episode-record-toMap
+    title: '修复 EpisodeRecord toMap 方法'
+    prompt: |
+      在 C:\code\thing_note\thing_note 项目中，lib/features/importer/data/importer_service.dart:198 调用了 `record.toMap()`，但 EpisodeRecord 类没有这个方法。
+
+      1. 检查 lib/features/record/domain/episode_record.dart 中 EpisodeRecord 的定义
+      2. 如果没有 toMap 方法，添加一个将 EpisodeRecord 转换为 Map<String, dynamic> 的方法
+      3. 返回的 Map 应该对应数据库表的列名
+
+      完成后运行 `flutter analyze` 验证。
+    assigned_to: coder
+    verified_by: verifier
+    verify_prompt: '运行 flutter analyze 检查 toMap 错误是否已修复'
+    timeout_ms: 300000
+
+  - id: fix-report-photoCount
+    title: '修复 Report 缺少 photoCount 参数'
+    prompt: |
+      在 C:\code\thing_note\thing_note 项目中，lib/features/report/data/report_service.dart:119 创建 Report 时缺少必需的 photoCount 参数。
+
+      1. 检查 lib/features/report/data/report_service.dart 中 Report 类的定义
+      2. 查看 dailyBreakdown 的创建代码
+      3. 添加 photoCount 参数（可能是 0 或从统计中计算）
+
+      完成后运行 `flutter analyze` 验证。
+    assigned_to: coder
+    verified_by: verifier
+    verify_prompt: '运行 flutter analyze 检查 Report photoCount 错误是否已修复'
+    timeout_ms: 300000
+
+  - id: verify-final-build
+    title: '验证最终构建'
+    prompt: |
+      在 C:\code\thing_note\thing_note 项目中，运行完整的 flutter analyze 确保所有错误已修复。
+
+      然后运行 flutter build apk --release --no-pub --target-platform android-arm64 验证构建成功。
+    assigned_to: coder
+    verified_by: verifier
+    verify_prompt: '运行 flutter build apk --release --no-pub --target-platform android-arm64 确认构建成功'
+    timeout_ms: 600000

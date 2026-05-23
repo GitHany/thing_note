@@ -5,7 +5,7 @@ import 'package:thing_note/app/router/app_router.dart';
 import 'package:thing_note/app/theme/app_theme.dart';
 import 'package:thing_note/app/theme/locale_provider.dart';
 import 'package:thing_note/app/theme/theme_provider.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:thing_note/l10n/generated/app_localizations.dart';
 
 class ThingNoteApp extends ConsumerWidget {
   const ThingNoteApp({super.key});

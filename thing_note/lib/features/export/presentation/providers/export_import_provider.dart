@@ -119,11 +119,8 @@ final backupZipListProvider = FutureProvider<List<FileSystemEntity>>((ref) async
   }
   final entities = await zipDir.list().toList();
   final zipFiles = entities.whereType<File>().where((f) => f.path.endsWith('.zip')).toList();
-  zipFiles.sort((a, b) {
-    final statA = a.statSync();
-    final statB = b.statSync();
-    return statB.modified.compareTo(statA.modified);
-  });
+  // Sort by filename descending (timestamp embedded in filename)
+  zipFiles.sort((a, b) => b.path.compareTo(a.path));
   return zipFiles;
 });
 

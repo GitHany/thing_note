@@ -1,0 +1,271 @@
+﻿version: 1
+plan:
+  name: "thing_note Flutter 静态分析修复"
+  max_concurrency: 4
+  max_consecutive_failures: 3
+  max_cycles: 10
+tasks:
+  - id: fix-futureprovider
+    title: "修复 FutureProvider 使用错误"
+    prompt: |
+      修复 C:\code\thing_note\thing_note 项目中所有 repository 文件的 FutureProvider 使用错误。
+      
+      问题原因: databaseProvider 是 FutureProvider<Database> 类型，但代码中直接 await databaseProvider，
+      导致 FutureProvider 被当作 Future 使用。
+      
+      需要修复的文件（约20+个）:
+      - lib/features/meal_planner/data/meal_plan_repository.dart
+      - lib/features/screen_time/data/screen_time_repository.dart
+      - lib/features/achievement/data/achievement_repository.dart
+      - lib/features/clothing_inventory/data/clothing_repository.dart
+      - lib/features/subscription_manager/data/subscription_repository.dart
+      - lib/features/vehicle_tracker/data/vehicle_repository.dart
+      - lib/features/warranty_tracker/data/warranty_repository.dart
+      - 以及其他所有有同样问题的 repository
+      
+      解决方案: 将 `final db = await databaseProvider;` 改为 `final db = await databaseProvider.future;`
+      
+      每个文件都需要:
+      1. 读取文件内容
+      2. 找到所有 `await databaseProvider` 的用法
+      3. 替换为 `await databaseProvider.future`
+      4. 保存文件
+      
+      完成后运行 flutter analyze 验证修复效果。
+    assigned_to: coder
+    verified_by: verifier
+    verify_prompt: |
+      验证所有 FutureProvider 错误已修复。
+      1. 检查修复的文件数量是否 >= 20
+      2. 运行 flutter analyze 确认 FutureProvider 相关错误减少
+      3. 检查是否还有其他遗漏的 await databaseProvider 用法
+    timeout_ms: 1800000
+  
+  - id: fix-localizations
+    title: "补充缺失的 AppLocalizations 翻译 key"
+    prompt: |
+      修复 C:\code\thing_note\thing_note 项目中所有缺失的 AppLocalizations 翻译 key。
+      
+      需要添加翻译的文件: lib/l10n/app_en.arb 和 lib/l10n/app_zh.arb
+      
+      缺失的 key 列表（按文件分组）:
+      
+      advanced_analytics_screen.dart:
+      - advancedAnalytics
+      - aiInsights
+      - activityTrend
+      - prediction
+      
+      automation_rules_screen.dart:
+      - automationRules
+      - myRules
+      - ruleTemplates
+      
+      collaborative_workspace_screen.dart:
+      - collaborativeWorkspace
+      - inviteMember
+      - workspaces
+      - teamMembers
+      - viewAll
+      - recentShared
+      - members
+      - createWorkspace
+      - workspaceName
+      - description (已有，可能需要检查)
+      - create
+      - email
+      - role
+      - invite
+      
+      custom_reports_screen.dart:
+      - customReports
+      - selectReportType
+      - generateReport
+      - reportPreview
+      - exportOptions
+      - reportHistory
+      - generatingReport
+      
+      data_export_hub_screen.dart:
+      - dataExportHub
+      - exportTemplates
+      - customExport
+      - exportFormat
+      - includeContent
+      - exportPreview
+      - startExport
+      
+      document_scanner_screen.dart:
+      - documentScanner
+      - extractedText
+      - scannedDocuments
+      
+      health_connect_screen.dart:
+      - healthConnect
+      - connected
+      - notConnected
+      - lastSync
+      - disconnect
+      - connect
+      - syncOptions
+      - steps
+      - stepsDesc
+      
+      meditation_screen.dart:
+      - sessionCompleted
+      - greatJob
+      - mindfulMoments
+      - sessions
+      - totalMinutes
+      - paused
+      - resume
+      - stop
+      - selectDuration
+      - minutesShort
+      - breathingGuide
+      - inhaleExhale
+      - startSession
+      - meditationHistory
+      
+      notification_hub_screen.dart:
+      - notificationHub
+      - notificationSettings
+      - pushNotifications
+      - emailNotifications
+      - reminderNotifications
+      - weeklyDigest
+      - marketingEmails
+      - recentNotifications
+      - clearAll
+      
+      project_management_screen.dart:
+      - projectManagement
+      
+      smart_geofence_screen.dart:
+      - smartGeofence
+      - locationEnabled
+      - locationDisabled
+      - myGeofences
+      
+      smart_scheduling_screen.dart:
+      - smartScheduling
+      - suggestedTimeSlots
+      - quickSchedule
+      - todaySchedule
+      - conflictDetection
+      - findOptimalTime
+      
+      smart_suggestions_screen.dart:
+      - smartSuggestions
+      - dismissAll
+      - ignore
+      
+      voice_commands_screen.dart:
+      - voiceCommands
+      - listening
+      - tapToSpeak
+      - availableCommands
+      - commandHistory
+      
+      为每个 key 添加中英文翻译。英文使用首字母大写的描述性短语，中文使用对应的中文翻译。
+      例如: "advancedAnalytics": "Advanced Analytics", "advancedAnalytics": "高级分析"
+      
+      完成后运行 flutter gen-l10n 重新生成翻译文件，然后运行 flutter analyze 验证。
+    assigned_to: coder
+    verified_by: verifier
+    verify_prompt: |
+      验证所有缺失的翻译 key 已添加。
+      1. 检查 app_en.arb 和 app_zh.arb 是否包含所有缺失的 key
+      2. 运行 flutter gen-l10n 确认没有错误
+      3. 运行 flutter analyze 确认 AppLocalizations 相关错误减少
+    timeout_ms: 1800000
+  
+  - id: fix-warnings
+    title: "修复代码警告"
+    prompt: |
+      修复 C:\code\thing_note\thing_note 项目中的代码警告。
+      
+      需要修复的警告类型:
+      
+      1. unused_import 警告 (5+ 个文件)
+      - lib/features/screen_time/data/screen_time_repository.dart: unused import 'package:sqflite/sqflite.dart'
+      - lib/features/subscription_manager/data/subscription_repository.dart: unused import 'package:sqflite/sqflite.dart'
+      - lib/features/vehicle_tracker/data/vehicle_repository.dart: unused import 'package:sqflite/sqflite.dart'
+      - lib/features/warranty_tracker/data/warranty_repository.dart: unused import 'package:sqflite/sqflite.dart'
+      - lib/features/achievement/data/achievement_repository.dart: unused import 'package:sqflite/sqflite.dart'
+      - lib/features/clothing_inventory/data/clothing_repository.dart: unused import 'package:sqflite/sqflite.dart'
+      
+      2. unnecessary_brace_in_string_interps 警告 (多处)
+      - lib/features/notification_center/data/notification_center_service.dart:189
+      - lib/features/reminder_prediction/data/reminder_prediction_service.dart:137,198
+      - lib/features/report/data/report_service.dart:318
+      - lib/features/report/presentation/report_screen.dart:199,201
+      - lib/features/sleep_tracker/domain/sleep_record.dart:74
+      - lib/features/summary/data/daily_summary_service.dart:134,138
+      - lib/features/timeline_enhanced/presentation/timeline_enhanced_screen.dart:204
+      
+      修复方式: 去掉不必要的花括号，如 '${variable}' 改为 '$variable'
+      
+      3. prefer_const_constructors 警告 (多处)
+      - lib/features/project_management/presentation/project_management_screen.dart:296,520,522,523,530
+      - lib/features/smart_geofence/presentation/smart_geofence_screen.dart:366,376,377,441,447
+      - lib/features/smart_scheduling/presentation/smart_scheduling_screen.dart:231,232
+      
+      修复方式: 为可以声明为 const 的构造函数添加 const 关键字
+      
+      4. curly_braces_in_flow_control_structures 警告
+      - lib/features/subscription_manager/presentation/subscription_manager_screen.dart:166
+      - lib/features/warranty_tracker/presentation/warranty_tracker_screen.dart:150
+      
+      修复方式: 将单行 if 语句改为使用代码块包裹
+      
+      5. prefer_final_in_for_each 警告
+      - lib/features/notification_hub/presentation/notification_hub_screen.dart:255
+      - lib/features/screen_time/data/screen_time_repository.dart:57
+      - lib/features/screen_time/presentation/screen_time_screen.dart:174
+      - lib/features/subscription_manager/data/subscription_repository.dart:53
+      - lib/features/vehicle_tracker/data/vehicle_repository.dart:53
+      
+      修复方式: 将循环变量声明为 final
+      
+      6. no_leading_underscores_for_local_identifiers 警告 (多处)
+      - lib/features/meal_planner/presentation/meal_planner_screen.dart 中的 _showMealPlanDialog, _showGroceryDialog 等
+      
+      注意: 这些是局部变量和函数名，不需要下划线前缀。但需要逐个检查确认不是必需的私有方法后再修改。
+      
+      完成后运行 flutter analyze 验证修复效果。
+    assigned_to: coder
+    verified_by: verifier
+    verify_prompt: |
+      验证所有代码警告已修复。
+      1. 检查修复的 unused_import 数量
+      2. 检查修复的 unnecessary_brace 数量
+      3. 运行 flutter analyze 确认警告数量减少
+      4. 确认修改没有引入新的问题
+    timeout_ms: 1800000
+  
+  - id: verify-all
+    title: "最终验证"
+    prompt: |
+      最终验证 C:\code\thing_note\thing_note 项目的所有修复。
+      
+      1. 运行 flutter analyze 获取最终分析结果
+      2. 对比修复前后的 issues 数量（原始 570 个）
+      3. 确认没有引入新的错误
+      4. 更新优化报告文件 C:\code\thing_note\thing_note\OPTIMIZATION_REPORT.md
+      
+      报告格式:
+      - 修复后的总 issues 数量
+      - 各类问题的修复情况
+      - 剩余未解决的问题及原因
+      - 建议的后续操作
+    assigned_to: verifier
+    depends_on: [fix-futureprovider, fix-localizations, fix-warnings]
+    verified_by: mavis
+    verify_prompt: |
+      最终验证计划完成情况。
+      1. 确认 flutter analyze 运行成功
+      2. 检查 issues 数量是否显著减少
+      3. 确认没有编译错误
+      4. 报告最终状态
+    timeout_ms: 600000

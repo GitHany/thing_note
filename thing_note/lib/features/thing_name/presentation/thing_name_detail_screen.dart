@@ -8,7 +8,7 @@ import 'package:thing_note/features/record/presentation/providers/record_provide
 import 'package:thing_note/features/record/presentation/widgets/record_card.dart';
 import 'package:thing_note/features/thing_name/domain/thing_name.dart';
 import 'package:thing_note/features/thing_name/presentation/providers/thing_name_provider.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:thing_note/l10n/generated/app_localizations.dart';
 
 class ThingNameDetailScreen extends ConsumerStatefulWidget {
   final int thingNameId;

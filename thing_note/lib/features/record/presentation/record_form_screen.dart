@@ -16,8 +16,11 @@ import 'package:thing_note/features/record/presentation/widgets/timer_widget.dar
 import 'package:thing_note/features/record/presentation/widgets/note_input.dart';
 import 'package:thing_note/features/thing_name/domain/thing_name.dart';
 import 'package:thing_note/app/theme/app_theme.dart';
+import 'package:thing_note/app/theme/spacing_constants.dart';
 import 'package:thing_note/features/thing_name/presentation/providers/thing_name_provider.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:thing_note/features/tag/presentation/providers/tag_provider.dart';
+import 'package:thing_note/features/tag/domain/tag.dart';
+import 'package:thing_note/l10n/generated/app_localizations.dart';
 
 class RecordFormScreen extends ConsumerStatefulWidget {
   final int? recordId;
@@ -50,6 +53,8 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
   bool _isLocating = false;
   List<String> _videoPaths = [];
   List<String> _documentPaths = [];
+  List<Tag> _selectedTags = [];
+  String _repeatType = 'none';
 
   DateTime _initialOccurredAt = DateTime.now();
   int _initialDurationSec = 0;
@@ -64,6 +69,8 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
   String? _initialAddress;
   List<String> _initialVideoPaths = [];
   List<String> _initialDocumentPaths = [];
+  List<Tag> _initialTags = [];
+  String _initialRepeatType = 'none';
 
   @override
   void initState() {
@@ -109,7 +116,9 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
         !_listEquals(_audioPaths, _initialAudioPaths) ||
         !_listEquals(_videoPaths, _initialVideoPaths) ||
         !_listEquals(_documentPaths, _initialDocumentPaths) ||
-        !_intListEquals(_audioDurationsSec, _initialAudioDurationsSec);
+        !_intListEquals(_audioDurationsSec, _initialAudioDurationsSec) ||
+        !_tagListEquals(_selectedTags, _initialTags) ||
+        _repeatType != _initialRepeatType;
 
     if (changed != _isChanged) {
       setState(() => _isChanged = changed);
@@ -130,6 +139,13 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
       if (a[i] != b[i]) return false;
     }
     return true;
+  }
+
+  bool _tagListEquals(List<Tag> a, List<Tag> b) {
+    if (a.length != b.length) return false;
+    final aIds = a.map((t) => t.id).toSet();
+    final bIds = b.map((t) => t.id).toSet();
+    return aIds.containsAll(bIds) && bIds.containsAll(aIds);
   }
 
   Future<bool> _onWillPop() async {
@@ -162,6 +178,12 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
     try {
       final record = await ref.read(recordDetailProvider(widget.recordId!).future);
       if (record != null && mounted) {
+        List<Tag> tags = [];
+        try {
+          final tagRepo = await ref.read(tagRepositoryProvider.future);
+          tags = await tagRepo.getTagsForRecord(record.id!);
+        } catch (_) {}
+
         setState(() {
           _occurredAt = record.occurredAt;
           _durationSec = record.durationSec;
@@ -177,6 +199,8 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
           _address = record.address;
           _videoPaths = List.from(record.videoPaths);
           _documentPaths = List.from(record.documentPaths);
+          _selectedTags = tags;
+          _repeatType = record.repeatType;
           _initialOccurredAt = record.occurredAt;
           _initialDurationSec = record.durationSec;
           _initialNote = record.note;
@@ -190,6 +214,8 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
           _initialAddress = record.address;
           _initialVideoPaths = List.from(record.videoPaths);
           _initialDocumentPaths = List.from(record.documentPaths);
+          _initialTags = List.from(tags);
+          _initialRepeatType = record.repeatType;
           _isDataLoaded = true;
         });
       }
@@ -227,44 +253,48 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
       final now = DateTime.now();
       final appDirPath = (await FileStorage.appDocumentsDirectory).path;
 
-      final List<String> savedPhotoPaths = [];
-      for (final path in _photoPaths) {
+      Future<String?> savePhotoIfNeeded(String path) async {
         final file = File(path);
         if (await file.exists()) {
           if (path.startsWith(appDirPath)) {
-            savedPhotoPaths.add(path);
-          } else {
-            final savedPath = await FileStorage.savePhotoFile(path);
-            savedPhotoPaths.add(savedPath);
+            return path;
           }
+          return FileStorage.savePhotoFile(path);
         }
+        return null;
       }
 
-      final List<String> savedAudioPaths = [];
-      for (final path in _audioPaths) {
+      Future<String?> saveAudioIfNeeded(String path) async {
         final file = File(path);
         if (await file.exists()) {
           if (path.startsWith(appDirPath)) {
-            savedAudioPaths.add(path);
-          } else {
-            final savedPath = await FileStorage.saveAudioFile(path);
-            savedAudioPaths.add(savedPath);
+            return path;
           }
+          return FileStorage.saveAudioFile(path);
         }
+        return null;
       }
 
-      final List<String> savedVideoPaths = [];
-      for (final path in _videoPaths) {
+      Future<String?> saveVideoIfNeeded(String path) async {
         final file = File(path);
         if (await file.exists()) {
           if (path.startsWith(appDirPath)) {
-            savedVideoPaths.add(path);
-          } else {
-            final savedPath = await FileStorage.saveVideoFile(path);
-            savedVideoPaths.add(savedPath);
+            return path;
           }
+          return FileStorage.saveVideoFile(path);
         }
+        return null;
       }
+
+      final results = await Future.wait([
+        Future.wait(_photoPaths.map((p) => savePhotoIfNeeded(p))),
+        Future.wait(_audioPaths.map((p) => saveAudioIfNeeded(p))),
+        Future.wait(_videoPaths.map((p) => saveVideoIfNeeded(p))),
+      ]);
+
+      final savedPhotoPaths = results[0].whereType<String>().toList();
+      final savedAudioPaths = results[1].whereType<String>().toList();
+      final savedVideoPaths = results[2].whereType<String>().toList();
 
       int? thingNameId = _thingNameId;
       if (!_isEditing && thingNameId == null) {
@@ -287,15 +317,27 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
         latitude: _latitude,
         longitude: _longitude,
         address: _address,
+        repeatType: _repeatType,
         createdAt: _originalCreatedAt ?? now,
         updatedAt: now,
       );
 
       if (_isEditing) {
-        await ref.read(recordNotifierProvider.notifier).update(record);
+        final createdRecord = await ref.read(recordNotifierProvider.notifier).update(record);
         ref.invalidate(recordDetailProvider(widget.recordId!));
+
+        if (createdRecord.id != null) {
+          final tagRepo = await ref.read(tagRepositoryProvider.future);
+          await tagRepo.setTagsForRecord(createdRecord.id!, _selectedTags.map((t) => t.id!).toList());
+        }
       } else {
-        await ref.read(recordNotifierProvider.notifier).create(record);
+        final createdRecord = await ref.read(recordNotifierProvider.notifier).create(record);
+        ref.invalidate(recordListProvider);
+
+        if (createdRecord.id != null) {
+          final tagRepo = await ref.read(tagRepositoryProvider.future);
+          await tagRepo.setTagsForRecord(createdRecord.id!, _selectedTags.map((t) => t.id!).toList());
+        }
       }
 
       ref.invalidate(recordListProvider);
@@ -339,6 +381,18 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
   @override
   Widget build(BuildContext context) {
     final thingNamesAsync = ref.watch(thingNameListProvider);
+    // 更灵活的响应式布局
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isUltraSmallScreen = AppSpacing.isUltraSmall(screenWidth);
+    final isSmallScreen = AppSpacing.isSmall(screenWidth);
+    final isWideScreen = screenWidth >= AppSpacing.mediumBreakpoint;
+    // 统一间距系统：小屏 10，中屏 12-14，大屏 18-20
+    final contentPadding = isUltraSmallScreen 
+        ? AppSpacing.ultraSmallHorizontalPadding 
+        : (isWideScreen ? AppSpacing.largeHorizontalPadding : AppSpacing.mediumHorizontalPadding);
+    final sectionSpacing = AppSpacing.getVerticalSpacing(screenWidth);
+    final cardPadding = AppSpacing.getItemSpacing(screenWidth);
+    final listTileVerticalPadding = isUltraSmallScreen ? 2.0 : 4.0;
 
     if (!_isDataLoaded) {
       return Scaffold(
@@ -364,7 +418,7 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
             children: [
               Text(_isEditing ? AppLocalizations.of(context)!.editRecord : AppLocalizations.of(context)!.newRecord),
               if (_isRecording) ...[
-                const SizedBox(width: 8),
+                const SizedBox(width: 12),
                 const _PulseIndicator(color: Colors.red),
               ],
             ],
@@ -380,29 +434,38 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
           actions: [
             FilledButton(
               onPressed: _isLoading ? null : _save,
+              style: FilledButton.styleFrom(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isUltraSmallScreen ? 12 : (isSmallScreen ? 14 : 20),
+                  vertical: isUltraSmallScreen ? 6 : (isSmallScreen ? 8 : 10),
+                ),
+              ),
               child: _isLoading
                   ? const SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : Text(AppLocalizations.of(context)!.save),
+                  : Text(
+                      AppLocalizations.of(context)!.save,
+                      style: TextStyle(fontSize: isUltraSmallScreen ? 11 : 14),
+                    ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
           ],
         ),
         body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(contentPadding),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: EdgeInsets.all(cardPadding),
                 decoration: AppTheme.softCardDecoration(context),
                 child: Column(
                   children: [
                     ListTile(
-                      contentPadding: EdgeInsets.zero,
+                      contentPadding: EdgeInsets.symmetric(horizontal: 0, vertical: listTileVerticalPadding),
                       leading: const Icon(Icons.calendar_today),
                       title: Text(AppLocalizations.of(context)!.occurredAt),
                       subtitle: Text(
@@ -410,6 +473,7 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
                       ),
                       onTap: () => _pickDateTime(),
                     ),
+                    Divider(height: isWideScreen ? 28 : 24),
                     thingNamesAsync.when(
                       loading: () => ListTile(
                         contentPadding: EdgeInsets.zero,
@@ -432,7 +496,7 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
                           }
                         }
                         return ListTile(
-                          contentPadding: EdgeInsets.zero,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 0, vertical: listTileVerticalPadding),
                           leading: const Icon(Icons.category),
                           title: Text(AppLocalizations.of(context)!.thingName),
                           subtitle: Text(selectedName?.name ?? AppLocalizations.of(context)!.pleaseSelect),
@@ -443,9 +507,9 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: sectionSpacing),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: EdgeInsets.all(cardPadding),
                 decoration: AppTheme.softCardDecoration(context),
                 child: TimerWidget(
                   initialDuration: Duration(seconds: _durationSec),
@@ -455,9 +519,15 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
                   },
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: sectionSpacing),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: EdgeInsets.all(cardPadding),
+                decoration: AppTheme.softCardDecoration(context),
+                child: _buildTagsSection(),
+              ),
+              SizedBox(height: sectionSpacing),
+              Container(
+                padding: EdgeInsets.all(cardPadding),
                 decoration: AppTheme.softCardDecoration(context),
                 child: Column(
                   children: [
@@ -471,6 +541,17 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
                         _checkChanged();
                       },
                     ),
+                    if (_hasReminder) ...[
+                      const SizedBox(height: 10),
+                      _RepeatTypeSelector(
+                        repeatType: _repeatType,
+                        onChanged: (value) {
+                          setState(() => _repeatType = value);
+                          _checkChanged();
+                        },
+                      ),
+                    ],
+                    SizedBox(height: sectionSpacing),
                     _LocationPicker(
                       address: _address,
                       isLocating: _isLocating,
@@ -488,9 +569,9 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: sectionSpacing),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: EdgeInsets.all(cardPadding),
                 decoration: AppTheme.softCardDecoration(context),
                 child: PhotoPickerSection(
                   initialPaths: _photoPaths,
@@ -500,9 +581,9 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
                   },
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: sectionSpacing),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: EdgeInsets.all(cardPadding),
                 decoration: AppTheme.softCardDecoration(context),
                 child: VideoPickerSection(
                   initialPaths: _videoPaths,
@@ -512,9 +593,9 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
                   },
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: sectionSpacing),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: EdgeInsets.all(cardPadding),
                 decoration: AppTheme.softCardDecoration(context),
                 child: AudioRecorderSection(
                   key: _audioRecorderKey,
@@ -532,9 +613,9 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
                   },
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: sectionSpacing),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: EdgeInsets.all(cardPadding),
                 decoration: AppTheme.softCardDecoration(context),
                 child: DocumentPickerSection(
                   initialPaths: _documentPaths,
@@ -544,12 +625,13 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
                   },
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: sectionSpacing),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: EdgeInsets.all(cardPadding),
                 decoration: AppTheme.softCardDecoration(context),
                 child: NoteInput(controller: _noteController),
               ),
+              const SizedBox(height: 40),
             ],
           ),
         ),
@@ -643,9 +725,7 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
               builder: (context, setModalState) {
                 final filtered = searchQuery.isEmpty
                     ? thingNames
-                    : thingNames
-                        .where((t) => t.name.contains(searchQuery))
-                        .toList();
+                    : thingNames.where((t) => t.name.contains(searchQuery)).toList();
                 return Column(
                   children: [
                     Padding(
@@ -658,10 +738,7 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         ),
                         onChanged: (value) {
                           setModalState(() => searchQuery = value);
@@ -679,14 +756,9 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
                           ? Center(
                               child: Text(
                                 AppLocalizations.of(context)!.noMatchResult,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .outline,
-                                    ),
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: Theme.of(context).colorScheme.outline,
+                                ),
                               ),
                             )
                           : ListView.builder(
@@ -695,8 +767,7 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
                                 final thingName = filtered[index];
                                 return ListTile(
                                   title: Text(thingName.name),
-                                  onTap: () =>
-                                      Navigator.pop(dialogContext, thingName.id),
+                                  onTap: () => Navigator.pop(dialogContext, thingName.id),
                                 );
                               },
                             ),
@@ -719,7 +790,7 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
   Future<void> _getCurrentLocation() async {
     setState(() => _isLocating = true);
     try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -754,34 +825,21 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
       try {
         position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.medium,
-          timeLimit: Duration(seconds: 10),
+          timeLimit: const Duration(seconds: 10),
         );
       } catch (e) {
         position = await Geolocator.getLastKnownPosition();
-        if (position == null) {
-          position = await Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.low,
-            timeLimit: Duration(seconds: 10),
-          );
-        }
+        position ??= await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.low,
+          timeLimit: const Duration(seconds: 10),
+        );
       }
 
-      if (position == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppLocalizations.of(context)!.locationFailed('Failed to get location'))),
-          );
-        }
-        return;
-      }
-
-      final pos = position!;
+      final pos = position;
 
       String? addressText;
       try {
-        final placemarks = await placemarkFromCoordinates(
-          pos.latitude, pos.longitude,
-        );
+        final placemarks = await placemarkFromCoordinates(pos.latitude, pos.longitude);
         if (placemarks.isNotEmpty) {
           final p = placemarks.first;
           final parts = <String>[
@@ -851,6 +909,228 @@ class _RecordFormScreenState extends ConsumerState<RecordFormScreen> {
       _checkChanged();
     }
   }
+
+  Widget _buildTagsSection() {
+    final tagsAsync = ref.watch(tagListProvider);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = AppSpacing.isSmall(screenWidth);
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(Icons.label),
+          title: Text(AppLocalizations.of(context)!.tags),
+          subtitle: _selectedTags.isEmpty
+              ? Text(AppLocalizations.of(context)!.noTags)
+              : isSmallScreen 
+                  // 小屏幕使用更紧凑的布局
+                  ? SizedBox(
+                      width: double.infinity,
+                      child: Wrap(
+                        spacing: 2,
+                        runSpacing: 2,
+                        children: _selectedTags.map((tag) {
+                          final tagColor = Color(int.parse(tag.color.replaceFirst('#', '0xFF')));
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _selectedTags.remove(tag);
+                              });
+                              _checkChanged();
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: tagColor.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(color: tagColor.withOpacity(0.3)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 6,
+                                    height: 6,
+                                    decoration: BoxDecoration(
+                                      color: tagColor,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    tag.name,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: tagColor,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Icon(Icons.close, size: 12, color: tagColor),
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    )
+                  : Wrap(
+                      spacing: 4,
+                      runSpacing: 4,
+                      children: _selectedTags.map((tag) {
+                        final tagColor = Color(int.parse(tag.color.replaceFirst('#', '0xFF')));
+                        return Chip(
+                          avatar: CircleAvatar(
+                            backgroundColor: tagColor,
+                            radius: 8,
+                            child: Text(
+                              tag.name[0].toUpperCase(),
+                              style: const TextStyle(color: Colors.white, fontSize: 9),
+                            ),
+                          ),
+                          label: Text(tag.name, style: const TextStyle(fontSize: 11)),
+                          deleteIcon: const Icon(Icons.close, size: 14),
+                          onDeleted: () {
+                            setState(() {
+                              _selectedTags.remove(tag);
+                            });
+                            _checkChanged();
+                          },
+                          visualDensity: VisualDensity.compact,
+                        );
+                      }).toList(),
+                    ),
+          trailing: tagsAsync.when(
+            data: (tags) => IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () => _showTagPicker(tags),
+            ),
+            loading: () => const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)),
+            error: (_, __) => const Icon(Icons.error),
+          ),
+          onTap: () {
+            final tags = tagsAsync.valueOrNull;
+            if (tags != null && tags.isNotEmpty) {
+              _showTagPicker(tags);
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  Future<void> _showTagPicker(List<Tag> allTags) async {
+    final availableTags = allTags.where((t) => !_selectedTags.any((st) => st.id == t.id)).toList();
+
+    if (availableTags.isEmpty && _selectedTags.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.createFirstTag)),
+      );
+      return;
+    }
+
+    final result = await showDialog<List<Tag>>(
+      context: context,
+      barrierColor: Colors.black54,
+      builder: (dialogContext) {
+        final tempSelected = List<Tag>.from(_selectedTags);
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return AlertDialog(
+              title: Text(AppLocalizations.of(context)!.tags),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (tempSelected.isNotEmpty) ...[
+                        Text(AppLocalizations.of(context)!.selectedCount(tempSelected.length),
+                            style: Theme.of(context).textTheme.bodySmall),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          children: tempSelected.map((tag) {
+                            final tagColor = Color(int.parse(tag.color.replaceFirst('#', '0xFF')));
+                            return Chip(
+                              avatar: CircleAvatar(
+                                backgroundColor: tagColor,
+                                radius: 10,
+                                child: Text(tag.name[0].toUpperCase(),
+                                    style: const TextStyle(color: Colors.white, fontSize: 10)),
+                              ),
+                              label: Text(tag.name, style: const TextStyle(fontSize: 12)),
+                              deleteIcon: const Icon(Icons.close, size: 14),
+                              onDeleted: () {
+                                setModalState(() => tempSelected.remove(tag));
+                              },
+                            );
+                          }).toList(),
+                        ),
+                        const Divider(height: 24),
+                      ],
+                      if (availableTags.isEmpty)
+                        Text(AppLocalizations.of(context)!.noTags)
+                      else
+                        ...availableTags.map((tag) {
+                          final tagColor = Color(int.parse(tag.color.replaceFirst('#', '0xFF')));
+                          final isSelected = tempSelected.any((t) => t.id == tag.id);
+                          return CheckboxListTile(
+                            value: isSelected,
+                            onChanged: (value) {
+                              setModalState(() {
+                                if (value == true) {
+                                  tempSelected.add(tag);
+                                } else {
+                                  tempSelected.removeWhere((t) => t.id == tag.id);
+                                }
+                              });
+                            },
+                            title: Row(
+                              children: [
+                                Container(
+                                  width: 16,
+                                  height: 16,
+                                  decoration: BoxDecoration(
+                                    color: tagColor,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(tag.name),
+                              ],
+                            ),
+                          );
+                        }),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: Text(AppLocalizations.of(context)!.cancel),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.pop(dialogContext, tempSelected),
+                  child: Text(AppLocalizations.of(context)!.confirm),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (result != null && mounted) {
+      setState(() => _selectedTags = result);
+      _checkChanged();
+    }
+  }
 }
 
 class _PulseIndicator extends StatefulWidget {
@@ -890,6 +1170,124 @@ class _PulseIndicatorState extends State<_PulseIndicator>
         decoration: BoxDecoration(
           color: widget.color,
           shape: BoxShape.circle,
+        ),
+      ),
+    );
+  }
+}
+
+class _RepeatTypeSelector extends StatelessWidget {
+  final String repeatType;
+  final ValueChanged<String> onChanged;
+
+  const _RepeatTypeSelector({
+    required this.repeatType,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 40, bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            AppLocalizations.of(context)!.repeatType,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              _RepeatChip(
+                label: AppLocalizations.of(context)!.repeatNone,
+                value: 'none',
+                isSelected: repeatType == 'none',
+                onTap: () => onChanged('none'),
+              ),
+              _RepeatChip(
+                label: AppLocalizations.of(context)!.repeatDaily,
+                value: 'daily',
+                isSelected: repeatType == 'daily',
+                onTap: () => onChanged('daily'),
+              ),
+              _RepeatChip(
+                label: AppLocalizations.of(context)!.repeatWeekly,
+                value: 'weekly',
+                isSelected: repeatType == 'weekly',
+                onTap: () => onChanged('weekly'),
+              ),
+              _RepeatChip(
+                label: AppLocalizations.of(context)!.repeatMonthly,
+                value: 'monthly',
+                isSelected: repeatType == 'monthly',
+                onTap: () => onChanged('monthly'),
+              ),
+              _RepeatChip(
+                label: AppLocalizations.of(context)!.repeatYearly,
+                value: 'yearly',
+                isSelected: repeatType == 'yearly',
+                onTap: () => onChanged('yearly'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RepeatChip extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _RepeatChip({
+    required this.label,
+    required this.value,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: isSelected
+          ? Theme.of(context).colorScheme.primaryContainer
+          : Theme.of(context).colorScheme.surfaceContainerHighest,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (isSelected)
+                Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: Icon(
+                    Icons.check,
+                    size: 14,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: isSelected
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.onSurface,
+                    ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -950,7 +1348,9 @@ class _LocationPicker extends StatelessWidget {
           ),
         Padding(
           padding: const EdgeInsets.only(left: 26),
-          child: Row(
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
               if (isLocating)
                 const SizedBox(
@@ -959,21 +1359,54 @@ class _LocationPicker extends StatelessWidget {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               else
-                OutlinedButton.icon(
-                  icon: const Icon(Icons.my_location, size: 18),
-                  label: Text(AppLocalizations.of(context)!.getCurrentLocation),
+                _LocationButton(
+                  icon: Icons.my_location,
+                  label: AppLocalizations.of(context)!.getCurrentLocation,
                   onPressed: onGetCurrentLocation,
                 ),
-              const SizedBox(width: 8),
-              OutlinedButton.icon(
-                icon: const Icon(Icons.edit_location_alt, size: 18),
-                label: Text(AppLocalizations.of(context)!.manualInput),
+              _LocationButton(
+                icon: Icons.edit_location_alt,
+                label: AppLocalizations.of(context)!.manualInput,
                 onPressed: isLocating ? null : onManualInput,
               ),
             ],
           ),
         ),
       ],
+    );
+  }
+}
+
+class _LocationButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback? onPressed;
+
+  const _LocationButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isUltraSmallScreen = AppSpacing.isUltraSmall(screenWidth);
+    final isSmallScreen = AppSpacing.isSmall(screenWidth);
+
+    return OutlinedButton.icon(
+      icon: Icon(icon, size: isUltraSmallScreen ? 12 : (isSmallScreen ? 14 : 16)),
+      label: Text(
+        label,
+        style: TextStyle(fontSize: isUltraSmallScreen ? 10 : (isSmallScreen ? 11 : 12)),
+      ),
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        padding: EdgeInsets.symmetric(
+          horizontal: isUltraSmallScreen ? 8 : (isSmallScreen ? 10 : 12),
+          vertical: isUltraSmallScreen ? 4 : (isSmallScreen ? 6 : 8),
+        ),
+      ),
     );
   }
 }

@@ -33,9 +33,6 @@ class _ExportParams {
 
 class _ProgressMessage {
   final String type;
-  final int? current;
-  final int? total;
-  final String? message;
   final String? logMessage;
   final String? path;
   final String? error;
@@ -43,9 +40,6 @@ class _ProgressMessage {
 
   _ProgressMessage({
     required this.type,
-    this.current,
-    this.total,
-    this.message,
     this.logMessage,
     this.path,
     this.error,
@@ -54,9 +48,6 @@ class _ProgressMessage {
 
   Map<String, dynamic> toMap() => {
     'type': type,
-    if (current != null) 'current': current,
-    if (total != null) 'total': total,
-    if (message != null) 'message': message,
     if (logMessage != null) 'logMessage': logMessage,
     if (path != null) 'path': path,
     if (error != null) 'error': error,

@@ -7,4 +7,5 @@ abstract class MediaService {
   Future<List<XFile>> pickAudioFromFiles();
   Future<String?> recordAudio();
   Future<String?> stopRecording();
+  Future<void> dispose();
 }

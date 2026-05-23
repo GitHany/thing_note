@@ -1,0 +1,155 @@
+﻿Analyzing thing_note...                                         
+
+   info - Use 'isNotEmpty' instead of 'length' to test whether the collection is empty - lib\features\analytics\domain\usage_analyzer.dart:217:9 - prefer_is_empty
+warning - Unused import: 'package:thing_note/features/tag/domain/tag.dart' - lib\features\batch\presentation\batch_operation_screen.dart:7:8 - unused_import
+  error - The getter 'addTagsDesc' isn't defined for the type 'AppLocalizations' - lib\features\batch\presentation\batch_operation_screen.dart:129:34 - undefined_getter
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\features\batch\presentation\batch_operation_screen.dart:360:32 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\features\batch\presentation\batch_operation_screen.dart:365:25 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\features\batch\presentation\batch_operation_screen.dart:369:32 - use_build_context_synchronously
+warning - The value of the local variable 'horizontalPadding' isn't used - lib\features\calendar\presentation\calendar_screen.dart:37:11 - unused_local_variable
+   info - Unnecessary use of string interpolation - lib\features\chart\presentation\chart_screen.dart:441:23 - unnecessary_string_interpolations
+   info - Use 'const' with the constructor to improve performance - lib\features\dashboard\presentation\widgets\dashboard_overview.dart:224:9 - prefer_const_constructors
+   info - Unnecessary braces in a string interpolation - lib\features\export\presentation\pdf_export\pdf_exporter.dart:361:68 - unnecessary_brace_in_string_interps
+   info - Unnecessary braces in a string interpolation - lib\features\export\presentation\pdf_export\pdf_exporter.dart:362:68 - unnecessary_brace_in_string_interps
+   info - Unnecessary braces in a string interpolation - lib\features\export\presentation\pdf_export\pdf_exporter.dart:363:68 - unnecessary_brace_in_string_interps
+   info - Don't use 'BuildContext's across async gaps - lib\features\export\presentation\pdf_exporter.dart:27:48 - use_build_context_synchronously
+warning - Unused import: 'package:go_router/go_router.dart' - lib\features\goal\presentation\goals_screen.dart:5:8 - unused_import
+  error - A value of type 'Database?' can't be returned from the function '_db' because it has a return type of 'Future<Database>' - lib\features\habit\data\habit_repository.dart:26:31 - return_of_invalid_type
+  error - A value of type 'Database?' can't be returned from the function '_db' because it has a return type of 'Future<Database>' - lib\features\importer\data\importer_service.dart:14:31 - return_of_invalid_type
+   info - Use 'const' with the constructor to improve performance - lib\features\importer\data\importer_service.dart:21:16 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\importer\data\importer_service.dart:67:16 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\importer\data\importer_service.dart:74:16 - prefer_const_constructors
+  error - The method 'toMap' isn't defined for the type 'EpisodeRecord' - lib\features\importer\data\importer_service.dart:194:47 - undefined_method
+   info - Use 'const' with the constructor to improve performance - lib\features\importer\data\importer_service.dart:288:16 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\importer\data\importer_service.dart:300:14 - prefer_const_constructors
+   info - A value for optional parameter 'onAnnotationSave' isn't ever given - lib\features\media\presentation\widgets\photo_picker.dart:633:10 - unused_element
+   info - Use 'const' for final variables initialized to a constant value - lib\features\media\presentation\widgets\photo_picker.dart:1037:13 - prefer_const_declarations
+   info - Use 'const' for final variables initialized to a constant value - lib\features\media\presentation\widgets\photo_picker.dart:1038:13 - prefer_const_declarations
+  error - A value of type 'Database?' can't be returned from the function '_db' because it has a return type of 'Future<Database>' - lib\features\mood\data\mood_repository.dart:38:31 - return_of_invalid_type
+warning - Unused import: 'package:flutter/material.dart' - lib\features\notification_center\data\notification_center_service.dart:1:8 - unused_import
+warning - Unused import: 'package:intl/intl.dart' - lib\features\notification_center\data\notification_center_service.dart:5:8 - unused_import
+   info - Use the null-aware operator '?.' rather than an explicit 'null' comparison - lib\features\notification_center\data\notification_center_service.dart:60:15 - prefer_null_aware_operators
+  error - A value of type 'Database?' can't be returned from the function '_db' because it has a return type of 'Future<Database>' - lib\features\notification_center\data\notification_center_service.dart:94:31 - return_of_invalid_type
+   info - Unnecessary braces in a string interpolation - lib\features\notification_center\data\notification_center_service.dart:187:53 - unnecessary_brace_in_string_interps
+   info - Unnecessary braces in a string interpolation - lib\features\notification_center\data\notification_center_service.dart:187:70 - unnecessary_brace_in_string_interps
+  error - Target of URI doesn't exist: 'package:thing_note/features/notification_centerdata
+otification_center_service.dart' - lib\features\notification_center\presentation\notification_center_screen.dart:3:8 - uri_does_not_exist
+   info - Unnecessary escape in string literal - lib\features\notification_center\presentation\notification_center_screen.dart:3:56 - unnecessary_string_escapes
+  error - Undefined name 'notificationCenterStateProvider' - lib\features\notification_center\presentation\notification_center_screen.dart:10:29 - undefined_identifier
+  error - Undefined name 'notificationCenterStateProvider' - lib\features\notification_center\presentation\notification_center_screen.dart:36:41 - undefined_identifier
+  error - Undefined name 'notificationCenterStateProvider' - lib\features\notification_center\presentation\notification_center_screen.dart:46:26 - undefined_identifier
+  error - Undefined name 'notificationCenterProvider' - lib\features\notification_center\presentation\notification_center_screen.dart:48:42 - undefined_identifier
+  error - Undefined name 'notificationCenterStateProvider' - lib\features\notification_center\presentation\notification_center_screen.dart:52:26 - undefined_identifier
+  error - Undefined class 'NotificationMessage' - lib\features\notification_center\presentation\notification_center_screen.dart:89:9 - undefined_class
+  error - Undefined name 'NotificationType' - lib\features\notification_center\presentation\notification_center_screen.dart:99:12 - undefined_identifier
+  error - Undefined name 'NotificationType' - lib\features\notification_center\presentation\notification_center_screen.dart:103:12 - undefined_identifier
+  error - Undefined name 'NotificationType' - lib\features\notification_center\presentation\notification_center_screen.dart:107:12 - undefined_identifier
+  error - Undefined name 'NotificationType' - lib\features\notification_center\presentation\notification_center_screen.dart:111:12 - undefined_identifier
+  error - Undefined name 'NotificationType' - lib\features\notification_center\presentation\notification_center_screen.dart:115:12 - undefined_identifier
+  error - Undefined name 'notificationCenterStateProvider' - lib\features\notification_center\presentation\notification_center_screen.dart:131:18 - undefined_identifier
+  error - Undefined name 'notificationCenterStateProvider' - lib\features\notification_center\presentation\notification_center_screen.dart:139:24 - undefined_identifier
+  error - The non-nullable local variable 'color' must be assigned before it can be used - lib\features\notification_center\presentation\notification_center_screen.dart:152:28 - not_assigned_potentially_non_nullable_local_variable
+  error - The non-nullable local variable 'icon' must be assigned before it can be used - lib\features\notification_center\presentation\notification_center_screen.dart:155:31 - not_assigned_potentially_non_nullable_local_variable
+  error - The non-nullable local variable 'color' must be assigned before it can be used - lib\features\notification_center\presentation\notification_center_screen.dart:155:44 - not_assigned_potentially_non_nullable_local_variable
+  error - A value of type 'Database?' can't be returned from the function '_db' because it has a return type of 'Future<Database>' - lib\features\project\data\project_repository.dart:28:31 - return_of_invalid_type
+   info - Use 'const' with the constructor to improve performance - lib\features\quick_access\presentation\quick_access_screen.dart:60:15 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\quick_access\presentation\quick_access_screen.dart:175:15 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\quick_access\presentation\quick_access_screen.dart:186:31 - prefer_const_constructors
+warning - The value of the local variable 'count' isn't used - lib\features\quick_access\presentation\quick_access_screen.dart:210:29 - unused_local_variable
+   info - Use 'const' with the constructor to improve performance - lib\features\quick_access\presentation\quick_access_screen.dart:373:25 - prefer_const_constructors
+warning - The value of the local variable 'cardPadding' isn't used - lib\features\record\presentation\record_detail_screen.dart:76:11 - unused_local_variable
+   info - Use 'const' with the constructor to improve performance - lib\features\record\presentation\record_detail_screen.dart:273:11 - prefer_const_constructors
+   info - The declaration '_buildLinkedRecordItem' isn't referenced - lib\features\record\presentation\record_detail_screen.dart:340:10 - unused_element
+   info - Use 'const' with the constructor to improve performance - lib\features\record\presentation\record_detail_screen.dart:1025:43 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\record\presentation\record_form_screen.dart:618:15 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\record\presentation\record_template_screen.dart:27:9 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\record\presentation\record_template_screen.dart:35:9 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\record\presentation\record_template_screen.dart:43:9 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\record\presentation\record_template_screen.dart:51:9 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\record\presentation\record_template_screen.dart:59:9 - prefer_const_constructors
+  error - Expected to find ')' - lib\features\record\presentation\widgets\record_card.dart:195:6 - expected_token
+   info - Local variables should be final - lib\features\recurrence\domain\recurrence_pattern.dart:89:5 - prefer_final_locals
+warning - The value of the local variable 'avg' isn't used - lib\features\recurrence\domain\recurrence_pattern.dart:188:11 - unused_local_variable
+   info - Local variables should be final - lib\features\recurrence\domain\recurrence_pattern.dart:250:9 - prefer_final_locals
+warning - Unused import: 'package:thing_note/features/thing_name/data/thing_name_repository_impl.dart' - lib\features\recurrence\presentation\providers\recurrence_provider.dart:4:8 - unused_import
+  error - Undefined name 'thingNameRepositoryProvider' - lib\features\recurrence\presentation\providers\recurrence_provider.dart:34:38 - undefined_identifier
+  error - The static method 'analyzePatterns' can't be accessed through an instance - lib\features\recurrence\presentation\providers\recurrence_provider.dart:52:32 - instance_access_to_static_member
+  error - The getter '_db' isn't defined for the type 'RecordRepositoryImpl' - lib\features\recurrence\presentation\providers\recurrence_provider.dart:72:59 - undefined_getter
+  error - The method '_fromMap' isn't defined for the type 'RecordRepositoryImpl' - lib\features\recurrence\presentation\providers\recurrence_provider.dart:79:41 - undefined_method
+  error - Undefined name 'thingNameRepositoryProvider' - lib\features\recurrence\presentation\providers\recurrence_provider.dart:86:38 - undefined_identifier
+  error - The static method 'predictNextOccurrence' can't be accessed through an instance - lib\features\recurrence\presentation\providers\recurrence_provider.dart:110:19 - instance_access_to_static_member
+  error - Target of URI doesn't exist: 'package:thing_note/features/recurrence/presentation/providers
+ecurrence_provider.dart' - lib\features\recurrence\presentation\recurrence_patterns_screen.dart:4:8 - uri_does_not_exist
+  error - Target of URI doesn't exist: 'package:thing_note/l10n/generated/l10n.dart' - lib\features\recurrence\presentation\recurrence_patterns_screen.dart:5:8 - uri_does_not_exist
+  error - Undefined name 'savedRecurrencePatternsProvider' - lib\features\recurrence\presentation\recurrence_patterns_screen.dart:13:37 - undefined_identifier
+  error - Undefined name 'L10n' - lib\features\recurrence\presentation\recurrence_patterns_screen.dart:14:18 - undefined_identifier
+  error - Undefined name 'recurrenceDetectorProvider' - lib\features\recurrence\presentation\recurrence_patterns_screen.dart:24:24 - undefined_identifier
+  error - Undefined name 'savedRecurrencePatternsProvider' - lib\features\recurrence\presentation\recurrence_patterns_screen.dart:25:30 - undefined_identifier
+  error - Undefined name 'L10n' - lib\features\recurrence\presentation\recurrence_patterns_screen.dart:50:18 - undefined_identifier
+  error - Undefined name 'recurrenceDetectorProvider' - lib\features\recurrence\presentation\recurrence_patterns_screen.dart:76:24 - undefined_identifier
+  error - Undefined name 'savedRecurrencePatternsProvider' - lib\features\recurrence\presentation\recurrence_patterns_screen.dart:77:30 - undefined_identifier
+  error - Undefined name 'L10n' - lib\features\recurrence\presentation\recurrence_patterns_screen.dart:88:18 - undefined_identifier
+  error - Undefined name 'recurrencePatternServiceProvider' - lib\features\recurrence\presentation\recurrence_patterns_screen.dart:135:52 - undefined_identifier
+  error - Undefined name 'savedRecurrencePatternsProvider' - lib\features\recurrence\presentation\recurrence_patterns_screen.dart:137:38 - undefined_identifier
+  error - Undefined class 'L10n' - lib\features\recurrence\presentation\recurrence_patterns_screen.dart:217:48 - undefined_class
+  error - Undefined class 'L10n' - lib\features\recurrence\presentation\recurrence_patterns_screen.dart:236:37 - undefined_class
+  error - Undefined class 'L10n' - lib\features\recurrence\presentation\recurrence_patterns_screen.dart:268:28 - undefined_class
+warning - The value of the field '_keySearchHistory' isn't used - lib\features\search\data\smart_search_suggestion_service.dart:54:16 - unused_field
+warning - The value of the field '_maxHistoryDays' isn't used - lib\features\search\data\smart_search_suggestion_service.dart:56:16 - unused_field
+  error - The method 'getSearchHistory' isn't defined for the type 'SmartSearchSuggestionService' - lib\features\search\data\smart_search_suggestion_service.dart:66:27 - undefined_method
+   info - Use 'const' with the constructor to improve performance - lib\features\search\presentation\smart_fab.dart:66:22 - prefer_const_constructors
+warning - Unused import: 'dart:typed_data' - lib\features\share\data\record_share_as_image_service.dart:2:8 - unused_import
+   info - The import of 'package:flutter/rendering.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' - lib\features\share\data\record_share_as_image_service.dart:5:8 - unnecessary_import
+   info - Use 'const' for final variables initialized to a constant value - lib\features\share\data\record_share_as_image_service.dart:98:5 - prefer_const_declarations
+   info - Use 'const' for final variables initialized to a constant value - lib\features\share\data\record_share_as_image_service.dart:99:5 - prefer_const_declarations
+   info - Use 'const' for final variables initialized to a constant value - lib\features\share\data\record_share_as_image_service.dart:100:5 - prefer_const_declarations
+  error - The getter 'ltr' isn't defined for the type 'TextDirection' - lib\features\share\data\record_share_as_image_service.dart:130:36 - undefined_getter
+  error - The getter 'ltr' isn't defined for the type 'TextDirection' - lib\features\share\data\record_share_as_image_service.dart:144:36 - undefined_getter
+  error - The getter 'ltr' isn't defined for the type 'TextDirection' - lib\features\share\data\record_share_as_image_service.dart:175:38 - undefined_getter
+  error - The getter 'ltr' isn't defined for the type 'TextDirection' - lib\features\share\data\record_share_as_image_service.dart:191:38 - undefined_getter
+  error - The getter 'ltr' isn't defined for the type 'TextDirection' - lib\features\share\data\record_share_as_image_service.dart:210:40 - undefined_getter
+  error - The getter 'ltr' isn't defined for the type 'TextDirection' - lib\features\share\data\record_share_as_image_service.dart:250:36 - undefined_getter
+  error - The getter 'ltr' isn't defined for the type 'TextDirection' - lib\features\share\data\record_share_as_image_service.dart:298:36 - undefined_getter
+  error - The getter 'ltr' isn't defined for the type 'TextDirection' - lib\features\share\data\record_share_as_image_service.dart:311:36 - undefined_getter
+  error - The getter 'ltr' isn't defined for the type 'TextDirection' - lib\features\share\data\record_share_as_image_service.dart:327:36 - undefined_getter
+  error - The getter 'ltr' isn't defined for the type 'TextDirection' - lib\features\share\data\record_share_as_image_service.dart:343:36 - undefined_getter
+  error - The getter 'ltr' isn't defined for the type 'TextDirection' - lib\features\share\data\record_share_as_image_service.dart:386:36 - undefined_getter
+  error - Arguments of a constant creation must be constant expressions - lib\features\share\data\record_share_as_image_service.dart:389:48 - const_with_non_constant_argument
+  error - The getter 'ltr' isn't defined for the type 'TextDirection' - lib\features\share\data\record_share_as_image_service.dart:400:36 - undefined_getter
+  error - Undefined name 'width' - lib\features\share\data\record_share_as_image_service.dart:402:34 - undefined_identifier
+  error - Invalid constant value - lib\features\share\data\record_share_as_image_service.dart:403:48 - invalid_constant
+   info - Local variables should be final - lib\features\share\data\record_share_as_image_service.dart:407:5 - prefer_final_locals
+  error - The getter 'ltr' isn't defined for the type 'TextDirection' - lib\features\share\data\record_share_as_image_service.dart:447:36 - undefined_getter
+  error - The getter 'ltr' isn't defined for the type 'TextDirection' - lib\features\share\data\record_share_as_image_service.dart:462:36 - undefined_getter
+  error - The getter 'ltr' isn't defined for the type 'TextDirection' - lib\features\share\data\record_share_as_image_service.dart:485:36 - undefined_getter
+   info - The variable 'tn' should be final - lib\features\smart_reminder\presentation\providers\smart_reminder_provider.dart:19:35 - prefer_final_in_for_each
+  error - A value of type 'Database?' can't be returned from the function '_db' because it has a return type of 'Future<Database>' - lib\features\smart_tag\data\smart_tag_service.dart:17:31 - return_of_invalid_type
+   info - Use 'const' with the constructor to improve performance - lib\features\smart_tag\data\smart_tag_service.dart:116:27 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\smart_tag\data\smart_tag_service.dart:127:29 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\smart_tag\data\smart_tag_service.dart:138:27 - prefer_const_constructors
+  error - Functions marked 'async' must have a return type which is a supertype of 'Future' - lib\features\smart_tag\data\smart_tag_service.dart:149:3 - illegal_async_return_type
+   info - Use 'const' with the constructor to improve performance - lib\features\smart_tag\data\smart_tag_service.dart:154:27 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\smart_tag\data\smart_tag_service.dart:163:27 - prefer_const_constructors
+warning - Unused import: 'package:thing_note/features/tag/presentation/providers/tag_provider.dart' - lib\features\smart_tag\presentation\smart_tag_widget.dart:5:8 - unused_import
+   info - Use 'const' with the constructor to improve performance - lib\features\statistics\presentation\enhanced_statistics_screen.dart:136:15 - prefer_const_constructors
+warning - The value of the local variable 'isWideScreen' isn't used - lib\features\statistics\presentation\enhanced_statistics_screen.dart:225:11 - unused_local_variable
+   info - Use 'const' with the constructor to improve performance - lib\features\statistics\presentation\enhanced_statistics_screen.dart:340:15 - prefer_const_constructors
+   info - Use 'const' for final variables initialized to a constant value - lib\features\statistics\presentation\enhanced_statistics_screen.dart:461:5 - prefer_const_declarations
+   info - Don't use 'BuildContext's across async gaps - lib\features\statistics\presentation\enhanced_statistics_screen.dart:585:35 - use_build_context_synchronously
+   info - Unnecessary braces in a string interpolation - lib\features\summary\data\daily_summary_service.dart:134:22 - unnecessary_brace_in_string_interps
+   info - Unnecessary braces in a string interpolation - lib\features\summary\data\daily_summary_service.dart:138:20 - unnecessary_brace_in_string_interps
+   info - Unnecessary braces in a string interpolation - lib\features\summary\data\daily_summary_service.dart:138:30 - unnecessary_brace_in_string_interps
+   info - The local variable '_refresh' starts with an underscore - lib\features\tag\presentation\tag_list_screen.dart:14:18 - no_leading_underscores_for_local_identifiers
+   info - The 'child' argument should be last in widget constructor invocations - lib\features\tag\presentation\tag_list_screen.dart:24:9 - sort_child_properties_last
+  error - The named parameter 'floatingActionButton' isn't defined - lib\features\tag\presentation\tag_list_screen.dart:138:7 - undefined_named_parameter
+  error - Expected to find ')' - lib\features\tag\presentation\tag_list_screen.dart:142:6 - expected_token
+   info - Local variables should be final - lib\features\templates\presentation\template_list_screen.dart:177:5 - prefer_final_locals
+  error - Expected to find ')' - lib\features\timeline\presentation\timeline_screen.dart:167:6 - expected_token
+
+flutter : 143 issues found. (ran in 7.7s)
+所在位置 行:1 字符: 35
++ cd C:\code\thing_note\thing_note; flutter analyze 2>&1 | Out-File -Fi ...
++                                   ~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (143 issues found. (ran in 7.7s):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 

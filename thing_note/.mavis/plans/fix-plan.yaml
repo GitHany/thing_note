@@ -1,0 +1,102 @@
+﻿version: 1
+plan:
+  name: "Fix thing_note Flutter errors"
+  max_concurrency: 5
+  max_consecutive_failures: 2
+  max_cycles: 10
+
+tasks:
+  - id: fix-focus-mode
+    title: "Fix focus_mode import path"
+    prompt: |
+      Fix C:\code\thing_note\thing_note\lib\features\focus_mode\presentation\focus_mode_screen.dart
+
+      Issues:
+      1. Line 5 imports domain\focus_session.dart - backslash needs to be forward slash
+      2. Line 127: FocusStats class not defined - check focus_repository.dart for FocusStats
+      3. Lines 141-143: stats?.todayMinutes needs null safety operators
+
+      Steps:
+      1. Read focus_mode_screen.dart
+      2. Read focus_repository.dart for FocusStats class definition
+      3. Fix import path to domain/focus_session.dart
+      4. Add FocusStats import
+      5. Fix null safety access
+      6. Run flutter analyze to verify
+
+      Working directory: C:\code\thing_note\thing_note
+    assigned_to: general
+
+  - id: fix-reading-list
+    title: "Fix reading_list import path"
+    prompt: |
+      Fix C:\code\thing_note\thing_note\lib\features\reading_list\presentation\reading_list_screen.dart
+
+      Issues:
+      1. Line 4 imports domain\reading_item.dart - backslash needs to be forward slash
+      2. Book and Article classes may not be exported correctly
+
+      Steps:
+      1. Read reading_list_screen.dart
+      2. Read reading_item.dart to verify Book and Article classes exist
+      3. Fix import path to domain/reading_item.dart
+      4. Run flutter analyze to verify
+
+      Working directory: C:\code\thing_note\thing_note
+    assigned_to: general
+
+  - id: fix-recipe-manager
+    title: "Fix recipe_manager ref error"
+    prompt: |
+      Fix C:\code\thing_note\thing_note\lib\features\recipe_manager\presentation\recipe_manager_screen.dart
+
+      Issues:
+      1. Line 278 uses undefined ref - _RecipeDetailDialog is a regular function without WidgetRef parameter
+
+      Steps:
+      1. Read recipe_manager_screen.dart
+      2. Add WidgetRef parameter to _RecipeDetailDialog method
+      3. Pass ref at call site
+      4. Run flutter analyze to verify
+
+      Working directory: C:\code\thing_note\thing_note
+    assigned_to: general
+
+  - id: fix-event-reminder
+    title: "Fix event_reminder_screen errors"
+    prompt: |
+      Fix C:\code\thing_note\thing_note\lib\features\event_reminder\presentation\event_reminder_screen.dart
+
+      Issues:
+      1. Line 102: Icons.trigger_alert does not exist
+      2. Line 141: TriggerType.values undefined
+      3. Line 159: ActionType.values undefined
+
+      Steps:
+      1. Read event_reminder_screen.dart
+      2. Read event_trigger.dart to see structure
+      3. Replace Icons.trigger_alert with Icons.notifications
+      4. Remove or fix .values calls
+      5. Run flutter analyze to verify
+
+      Working directory: C:\code\thing_note\thing_note
+    assigned_to: general
+
+  - id: fix-mood-boost
+    title: "Fix mood_boost Icons errors"
+    prompt: |
+      Fix mood_boost related files
+
+      Issues:
+      1. mood_action.dart: Icons in const list causes invalid_constant error
+      2. mood_action_repository.dart line 69: Icons undefined
+      3. mood_boost_screen.dart line 12: unused variable actionsAsync
+
+      Steps:
+      1. Read mood_action.dart - check PresetMoodAction presets
+      2. Read mood_action_repository.dart - add flutter/material.dart import
+      3. Read mood_boost_screen.dart - delete or use actionsAsync variable
+      4. Run flutter analyze to verify
+
+      Working directory: C:\code\thing_note\thing_note
+    assigned_to: general

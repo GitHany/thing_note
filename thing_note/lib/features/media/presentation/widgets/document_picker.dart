@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:thing_note/l10n/generated/app_localizations.dart';
 
 class DocumentPickerSection extends StatefulWidget {
   final List<String> initialPaths;

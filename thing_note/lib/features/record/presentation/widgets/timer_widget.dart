@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:thing_note/core/utils/duration_formatter.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:thing_note/l10n/generated/app_localizations.dart';
 
 class TimerWidget extends StatefulWidget {
   final Duration initialDuration;
@@ -87,15 +87,25 @@ class _TimerWidgetState extends State<TimerWidget> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 360;
+    final isWideScreen = screenWidth > 600;
+
+    // Responsive sizing
+    final cardPadding = isSmallScreen ? 12.0 : (isWideScreen ? 20.0 : 16.0);
+    final displayFontSize = isSmallScreen ? 18.0 : (isWideScreen ? 26.0 : 22.0);
+    final labelFontSize = isSmallScreen ? 10.0 : 12.0;
+    final buttonSpacing = isSmallScreen ? 8.0 : 12.0;
+
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(cardPadding),
         child: Column(
           children: [
             GestureDetector(
               onTap: _showDurationPicker,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 12 : 16, vertical: isSmallScreen ? 6 : 8),
                 decoration: BoxDecoration(
                   border: Border.all(color: Theme.of(context).dividerColor),
                   borderRadius: BorderRadius.circular(8),
@@ -104,38 +114,40 @@ class _TimerWidgetState extends State<TimerWidget> {
                   DurationFormatter.format(_duration),
                   style: Theme.of(context).textTheme.displaySmall?.copyWith(
                         fontFeatures: [const FontFeature.tabularFigures()],
+                        fontSize: displayFontSize,
                       ),
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: isSmallScreen ? 4 : 8),
             Text(
               l10n.duration,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: labelFontSize,
                   ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: isSmallScreen ? 10 : 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (!_isRunning)
                   FilledButton.icon(
                     onPressed: _start,
-                    icon: const Icon(Icons.play_arrow),
-                    label: Text(l10n.startTimer),
+                    icon: Icon(Icons.play_arrow, size: isSmallScreen ? 18 : 24),
+                    label: Text(l10n.startTimer, style: TextStyle(fontSize: isSmallScreen ? 12 : 14)),
                   )
                 else
                   FilledButton.icon(
                     onPressed: _pause,
-                    icon: const Icon(Icons.pause),
-                    label: Text(l10n.pause),
+                    icon: Icon(Icons.pause, size: isSmallScreen ? 18 : 24),
+                    label: Text(l10n.pause, style: TextStyle(fontSize: isSmallScreen ? 12 : 14)),
                   ),
-                const SizedBox(width: 12),
+                SizedBox(width: buttonSpacing),
                 OutlinedButton.icon(
                   onPressed: _duration > Duration.zero ? _finish : null,
-                  icon: const Icon(Icons.check),
-                  label: Text(l10n.done),
+                  icon: Icon(Icons.check, size: isSmallScreen ? 18 : 24),
+                  label: Text(l10n.done, style: TextStyle(fontSize: isSmallScreen ? 12 : 14)),
                 ),
               ],
             ),

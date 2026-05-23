@@ -1,0 +1,11 @@
+﻿Don't use 'BuildContext's across async gaps
+Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check
+Statements in an if should be enclosed in a block
+The constant name 'thing_note_backup' isn't a lowerCamelCase identifier
+The declaration '_confirmDelete' isn't referenced
+The declaration '_defaultSuggestions' isn't referenced
+The declaration '_showEditTemplateDialog' isn't referenced
+The declaration 'decodeFromJson' isn't referenced
+The declaration 'depth' isn't referenced
+The declaration 'encodeToJson' isn't referenced
+Use a function declaration rather than a variable assignment to bind a function to a name

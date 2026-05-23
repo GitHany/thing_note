@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:image_picker/image_picker.dart';
@@ -8,23 +9,10 @@ import 'package:uuid/uuid.dart';
 
 class MediaServiceImpl implements MediaService {
   final ImagePicker _imagePicker = ImagePicker();
-  final FlutterSoundPlayer _player = FlutterSoundPlayer();
+  FlutterSoundPlayer? _player;
   FlutterSoundRecorder? _recorder;
   String? _currentRecordingPath;
-  bool _isPlayerOpen = false;
-
-  MediaServiceImpl() {
-    _initPlayer();
-  }
-
-  Future<void> _initPlayer() async {
-    try {
-      await _player.openPlayer();
-      _isPlayerOpen = true;
-    } catch (e) {
-      _isPlayerOpen = false;
-    }
-  }
+  bool _disposed = false;
 
   @override
   Future<List<XFile>> pickPhotosFromGallery() async {
@@ -71,6 +59,8 @@ class MediaServiceImpl implements MediaService {
 
   @override
   Future<String?> recordAudio() async {
+    if (_disposed) return null;
+    
     final status = await Permission.microphone.request();
     if (!status.isGranted) {
       return null;
@@ -129,7 +119,10 @@ class MediaServiceImpl implements MediaService {
     }
   }
 
+  @override
   Future<void> dispose() async {
+    _disposed = true;
+    
     try {
       if (_recorder != null) {
         if (_recorder!.isRecording) {
@@ -142,11 +135,11 @@ class MediaServiceImpl implements MediaService {
       _recorder = null;
     }
 
-    if (_isPlayerOpen) {
+    if (_player != null) {
       try {
-        await _player.closePlayer();
-        _isPlayerOpen = false;
+        await _player!.closePlayer();
       } catch (_) {}
+      _player = null;
     }
   }
 }

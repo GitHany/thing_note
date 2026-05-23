@@ -1,0 +1,47 @@
+﻿Dangling library doc comment
+Don't use 'BuildContext's across async gaps
+Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check
+Expected an identifier
+Expected to find ';'
+Expected to find '}'
+Local variables should be final
+Statements in an if should be enclosed in a block
+The constant name 'thing_note_backup' isn't a lowerCamelCase identifier
+The constructor being called isn't a const constructor
+The declaration '_confirmDelete' isn't referenced
+The declaration '_defaultSuggestions' isn't referenced
+The declaration '_showEditTemplateDialog' isn't referenced
+The declaration 'decodeFromJson' isn't referenced
+The declaration 'encodeToJson' isn't referenced
+The getter 'isEmpty' isn't defined for the type 'Future<List<GoalDependencyModel>>'
+The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart'
+The member 'toString' overrides an inherited member but isn't annotated with '@override'
+The private field _archiveDays could be 'final'
+The private field _batchSize could be 'final'
+The private field _compressionQuality could be 'final'
+The private field _elapsedSeconds could be 'final'
+The private field _importAudio could be 'final'
+The private field _importPhotos could be 'final'
+The private field _interactionDate could be 'final'
+The private field _interruptions could be 'final'
+The private field _maxDaily could be 'final'
+The private field _priority could be 'final'
+The private field _quietHoursEnd could be 'final'
+The private field _quietHoursStart could be 'final'
+The private field _rapidInterval could be 'final'
+The private field _readingType could be 'final'
+The private field _tasksPlanned could be 'final'
+The type 'Future<List<GoalDependencyModel>>' used in the 'for' loop must implement 'Iterable'
+The variable 'm' should be final
+The variable 'map' should be final
+Unexpected text ';'
+Unnecessary braces in a string interpolation
+Unnecessary 'const' keyword
+Unnecessary use of double quotes
+Unnecessary use of string interpolation
+Use a function declaration rather than a variable assignment to bind a function to a name
+Use 'const' for final variables initialized to a constant value
+Use 'const' literals as arguments to constructors of '@immutable' classes
+Use 'const' with the constructor to improve performance
+Use interpolation to compose strings and values
+Use the '??' operator rather than '?:' when testing for 'null'

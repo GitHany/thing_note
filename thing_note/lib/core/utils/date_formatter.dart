@@ -56,4 +56,10 @@ class DateFormatter {
       return '${diff.inDays}$daysAgo';
     }
   }
+
+  static String formatDateFull(DateTime dateTime, {
+    DateFormatOption dateFormat = DateFormatOption.ymd,
+  }) {
+    return DateFormat(_datePattern(dateFormat)).format(dateTime);
+  }
 }

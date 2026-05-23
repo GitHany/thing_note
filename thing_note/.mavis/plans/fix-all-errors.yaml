@@ -1,0 +1,71 @@
+﻿version: 1
+plan:
+  name: 'fix-thingnote-all-errors'
+  max_concurrency: 3
+  max_consecutive_failures: 3
+  max_cycles: 20
+tasks:
+  - id: fix-repo-db
+    title: '修复 repository 数据库访问问题'
+    prompt: '修复 C:\code\thing_note\thing_note 项目中所有新扩展功能的 repository 文件数据库访问问题。所有 *_repository.dart 文件（data层）需要：
+1. 添加 import package:flutter_riverpod/flutter_riverpod.dart
+2. 添加 final Ref _ref; 字段
+3. 构造函数改为接收 Ref: XxxRepository(this._ref)
+4. 把 await databaseProvider.future 改为 await _ref.read(databaseProvider.future)
+5. 修改对应的 provider 文件传递 ref
+
+需要修复的文件：
+lib\features\idea_capture\data\idea_capture_repository.dart
+lib\features\custom_gesture\data\custom_gesture_repository.dart
+lib\features\custom_theme\data\custom_theme_repository.dart
+lib\features\goal_review\data\goal_review_repository.dart
+lib\features\habit_challenge\data\habit_challenge_repository.dart
+lib\features\intelligent_reminder\data\intelligent_reminder_repository.dart
+lib\features\location_checkin\data\location_checkin_repository.dart
+lib\features\mood_correlation\data\mood_correlation_repository.dart
+lib\features\quick_template\data\quick_template_repository.dart
+lib\features\smart_dashboard\data\smart_dashboard_repository.dart
+lib\features\smart_weekly_planner\data\weekly_planner_repository.dart
+lib\features\cloud_sync\data\cloud_sync_repository.dart
+lib\features\data_export\data\data_export_repository.dart
+lib\features\cross_platform_backup\data\cross_platform_backup_repository.dart
+lib\features\daily_summary_widget\data\daily_summary_repository.dart
+lib\features\enhanced_export\data\enhanced_export_repository.dart
+lib\features\folder_management\data\folder_repository.dart
+lib\features\smart_notification\data\smart_notification_repository.dart
+lib\features\smart_shortcut\data\smart_shortcut_repository.dart
+lib\features\voice_input\data\voice_input_repository.dart
+
+完成后运行 flutter analyze 确认 error 数量减少。'
+    assigned_to: general
+    verified_by: verifier
+    verify_prompt: '验证修复后的文件，await databaseProvider.future 已全部改为 await _ref.read(databaseProvider.future)。运行 flutter analyze。'
+    timeout_ms: 1800000
+  - id: fix-context-sync
+    title: '修复 use_build_context_synchronously'
+    prompt: '修复 C:\code\thing_note\thing_note 中所有 use_build_context_synchronously 警告。在 Navigator.pop/ScaffoldMessenger 等调用前添加 if (!ctx.mounted) return 或 if (!mounted) return。
+
+需要修复的文件：custom_gesture_screen:147, custom_theme_screen:135, goal_review_screen:154, idea_capture_screen:154,181, intelligent_reminder_screen:147, location_checkin_screen:185, habit_challenge_screen:148, daily_routine_screen:288, habit_streak_screen:187, location_history_screen:274, mood_calendar_screen:313, smart_calendar_screen:331, smart_weekly_planner_screen:199, quick_search_screen:245,267,273, smart_template_screen:262,273,283,291,452,512, quick_actions_screen:47,50,53,57,209,512, enhanced_export_screen:539, folder_management_screen:223,289, smart_notification_screen:184, smart_shortcut_screen:211
+
+修复模式：await后加 if (!ctx.mounted) return;
+完成后运行 flutter analyze 确认警告减少。'
+    assigned_to: general
+    verified_by: verifier
+    verify_prompt: '验证修复后的文件，async gap 后的 Navigator.pop 调用前都有 mounted 检查。运行 flutter analyze。'
+    timeout_ms: 1800000
+  - id: fix-const-style
+    title: '修复 const 风格问题'
+    prompt: '修复 C:\code\thing_note\thing_note 中所有 prefer_const_constructors、unnecessary_brace_in_string_interps、unused_import 等风格问题。
+
+修复方式：
+- prefer_const_constructors: 添加 const
+- unnecessary_brace_in_string_interps: ${x} 改为 $x
+- unused_import: 删除未使用的 import
+
+需要处理的文件：data_recovery_wizard_screen, enhanced_export_screen, daily_summary_widget_screen, cross_platform_backup_screen, mood_heatmap_screen, quick_stats_screen, goal_review_screen, mood_correlation_repository, smart_template_repository, data_recovery_wizard_screen (unused dart:io import)
+
+完成后运行 flutter analyze 确认 info 数量减少。'
+    assigned_to: general
+    verified_by: verifier
+    verify_prompt: '验证修复后的文件，const 和风格问题已修复。运行 flutter analyze。'
+    timeout_ms: 1800000

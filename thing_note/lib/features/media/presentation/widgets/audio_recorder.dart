@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:thing_note/l10n/generated/app_localizations.dart';
 import 'package:thing_note/core/utils/duration_formatter.dart';
 import 'package:thing_note/core/utils/file_storage.dart';
 import 'package:thing_note/features/media/presentation/providers/media_provider.dart';
@@ -91,7 +91,7 @@ class AudioRecorderSectionState extends ConsumerState<AudioRecorderSection>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.locationPermissionDenied),
+            content: Text(AppLocalizations.of(context)!.microphonePermissionDenied),
             action: SnackBarAction(
               label: AppLocalizations.of(context)!.settings,
               onPressed: () => openAppSettings(),
@@ -272,6 +272,11 @@ class AudioRecorderSectionState extends ConsumerState<AudioRecorderSection>
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    // Responsive audio list item height
+    final itemHeight = screenWidth > 600 ? 60.0 : 56.0;
+    const itemSpacing = 10.0;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -279,18 +284,18 @@ class AudioRecorderSectionState extends ConsumerState<AudioRecorderSection>
           AppLocalizations.of(context)!.audios,
           style: Theme.of(context).textTheme.titleSmall,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         if (_isRecording)
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(14),
             ),
             child: Row(
               children: [
-                const Icon(Icons.fiber_manual_record, color: Colors.red, size: 16),
-                const SizedBox(width: 8),
+                const Icon(Icons.fiber_manual_record, color: Colors.red, size: 18),
+                const SizedBox(width: 10),
                 Text(
                   DurationFormatter.format(_recordingDuration),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -320,7 +325,7 @@ class AudioRecorderSectionState extends ConsumerState<AudioRecorderSection>
                     : const Icon(Icons.mic),
                 label: Text(_isInitializing ? AppLocalizations.of(context)!.loading : AppLocalizations.of(context)!.startRecording),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               OutlinedButton.icon(
                 onPressed: _pickAudioFromFile,
                 icon: const Icon(Icons.audio_file),
@@ -328,12 +333,14 @@ class AudioRecorderSectionState extends ConsumerState<AudioRecorderSection>
               ),
             ],
           ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
         if (_audioPaths.isNotEmpty)
           _AudioList(
             audioPaths: _audioPaths,
             audioDurationsSec: _audioDurationsSec,
             onRemove: _removeAudio,
+            itemHeight: itemHeight,
+            itemSpacing: itemSpacing,
           ),
       ],
     );
@@ -344,17 +351,19 @@ class _AudioList extends StatelessWidget {
   final List<String> audioPaths;
   final List<int> audioDurationsSec;
   final void Function(int index) onRemove;
+  final double itemHeight;
+  final double itemSpacing;
 
   const _AudioList({
     required this.audioPaths,
     required this.audioDurationsSec,
     required this.onRemove,
+    this.itemHeight = 56.0,
+    this.itemSpacing = 8.0,
   });
 
   @override
   Widget build(BuildContext context) {
-    const double itemHeight = 56.0;
-    const double itemSpacing = 8.0;
     const int maxVisibleItems = 5;
     final bool needsScroll = audioPaths.length > maxVisibleItems;
     final double listHeight = needsScroll
@@ -368,7 +377,7 @@ class _AudioList extends StatelessWidget {
             ? const AlwaysScrollableScrollPhysics()
             : const NeverScrollableScrollPhysics(),
         itemCount: audioPaths.length,
-        separatorBuilder: (_, __) => const SizedBox(height: itemSpacing),
+        separatorBuilder: (_, __) => SizedBox(height: itemSpacing),
         itemBuilder: (context, index) {
           return SizedBox(
             height: itemHeight,

@@ -1,0 +1,397 @@
+version: 1
+plan:
+  name: 'v0.0.34 功能扩展 - 13项新功能'
+  max_concurrency: 5
+  max_consecutive_failures: 3
+  max_cycles: 30
+tasks:
+  # 1. Flow State Tracker
+  - id: flow-state-tracker
+    title: '实现 Flow State Tracker 功能'
+    prompt: |
+      在 C:\code\thing_note\thing_note 项目中实现 Flow State Tracker 功能。
+
+      功能需求：
+      - 深度工作/心流状态追踪系统
+      - 开始/结束流状态计时
+      - 专注度评分 (1-5)
+      - 分心次数记录
+      - 与记录关联功能
+      - 会话备注
+      - 统计：总时长、平均专注度、会话数
+
+      数据库表已定义在 database_provider.dart (v0.0.33):
+      - flow_states 表
+
+      需要创建的文件：
+      1. lib/features/flow_state/domain/flow_state.dart - 领域模型
+      2. lib/features/flow_state/data/flow_state_repository.dart - 数据仓库
+      3. lib/features/flow_state/presentation/flow_state_screen.dart - 界面
+
+      请参考项目中现有功能的代码结构（如 focus_timer 或 habit）来保持一致性。
+      确保正确添加到 app_router.dart 中的路由。
+    assigned_to: general
+    verified_by: verifier
+    verify_prompt: 'Verify the flow_state feature implementation is complete with all required files and proper routing.'
+    timeout_ms: 600000
+
+  # 2. Reading Session Tracker
+  - id: reading-tracker
+    title: '实现 Reading Session Tracker 功能'
+    prompt: |
+      在 C:\code\thing_note\thing_note 项目中实现 Reading Session Tracker 功能。
+
+      功能需求：
+      - 阅读会话记录
+      - 书籍/文章追踪
+      - 页数和时长统计
+      - 按书籍分组展示
+      - 统计：会话数、总时长、总页数、平均时长
+
+      数据库表已定义在 database_provider.dart (v0.0.33):
+      - reading_sessions 表
+
+      需要创建的文件：
+      1. lib/features/reading_tracker/domain/reading_session.dart - 领域模型
+      2. lib/features/reading_tracker/data/reading_tracker_repository.dart - 数据仓库
+      3. lib/features/reading_tracker/presentation/reading_tracker_screen.dart - 界面
+
+      请参考项目中现有功能的代码结构来保持一致性。
+      确保正确添加到 app_router.dart 中的路由。
+    assigned_to: general
+    verified_by: verifier
+    verify_prompt: 'Verify the reading_tracker feature implementation is complete with all required files and proper routing.'
+    timeout_ms: 600000
+
+  # 3. Creative Projects
+  - id: creative-tracker
+    title: '实现 Creative Projects 功能'
+    prompt: |
+      在 C:\code\thing_note\thing_note 项目中实现 Creative Projects 功能。
+
+      功能需求：
+      - 创意项目创建和管理
+      - 项目类型（写作/艺术/音乐/编程/设计等）
+      - 进度百分比追踪
+      - 创意会话记录
+      - 创造力评分
+
+      数据库表已定义在 database_provider.dart (v0.0.33):
+      - creative_projects 表
+      - creative_sessions 表
+
+      需要创建的文件：
+      1. lib/features/creative_tracker/domain/creative_project.dart - 领域模型
+      2. lib/features/creative_tracker/data/creative_tracker_repository.dart - 数据仓库
+      3. lib/features/creative_tracker/presentation/creative_tracker_screen.dart - 界面
+
+      请参考项目中现有功能的代码结构来保持一致性。
+      确保正确添加到 app_router.dart 中的路由。
+    assigned_to: general
+    verified_by: verifier
+    verify_prompt: 'Verify the creative_tracker feature implementation is complete with all required files and proper routing.'
+    timeout_ms: 600000
+
+  # 4. Social Interactions Logger
+  - id: social-logger
+    title: '实现 Social Interactions Logger 功能'
+    prompt: |
+      在 C:\code\thing_note\thing_note 项目中实现 Social Interactions Logger 功能。
+
+      功能需求：
+      - 社交互动记录
+      - 人员管理和追踪
+      - 互动类型（聊天/通话/会议/晚餐/活动/视频通话）
+      - 质量评分 (1-5)
+      - 后续跟进标记
+      - 人员摘要统计
+      - 统计：总互动数、独立人数、总时长、平均质量
+
+      数据库表已定义在 database_provider.dart (v0.0.33):
+      - social_interactions 表
+
+      需要创建的文件：
+      1. lib/features/social_logger/domain/social_interaction.dart - 领域模型
+      2. lib/features/social_logger/data/social_logger_repository.dart - 数据仓库
+      3. lib/features/social_logger/presentation/social_logger_screen.dart - 界面
+
+      请参考项目中现有功能的代码结构来保持一致性。
+      确保正确添加到 app_router.dart 中的路由。
+    assigned_to: general
+    verified_by: verifier
+    verify_prompt: 'Verify the social_logger feature implementation is complete with all required files and proper routing.'
+    timeout_ms: 600000
+
+  # 5. Productivity Score
+  - id: productivity-score
+    title: '实现 Productivity Score 功能'
+    prompt: |
+      在 C:\code\thing_note\thing_note 项目中实现 Productivity Score 功能。
+
+      功能需求：
+      - 每日生产力评分系统
+      - 多维度评分：专注、能量、输出 (1-5分制)
+      - 综合得分计算 = (专注 + 能量 + 输出) / 3
+      - 任务完成追踪
+      - 深度工作时间统计
+      - 中断次数记录
+      - 平均统计展示
+
+      数据库表已定义在 database_provider.dart (v0.0.33):
+      - daily_productivity_scores 表
+
+      需要创建的文件：
+      1. lib/features/productivity_score/domain/productivity_score.dart - 领域模型
+      2. lib/features/productivity_score/data/productivity_score_repository.dart - 数据仓库
+      3. lib/features/productivity_score/presentation/productivity_score_screen.dart - 界面
+
+      请参考项目中现有功能的代码结构来保持一致性。
+      确保正确添加到 app_router.dart 中的路由。
+    assigned_to: general
+    verified_by: verifier
+    verify_prompt: 'Verify the productivity_score feature implementation is complete with all required files and proper routing.'
+    timeout_ms: 600000
+
+  # 6. Idle Time Detector
+  - id: idle-detector
+    title: '实现 Idle Time Detector 功能'
+    prompt: |
+      在 C:\code\thing_note\thing_note 项目中实现 Idle Time Detector 功能。
+
+      功能需求：
+      - 空闲时间追踪
+      - 空闲类型分类：unplanned/break/waiting/distracted/rest
+      - 原因记录
+      - 生产性/非生产性标记
+      - 空闲时间统计和可视化
+      - 统计：总记录数、总分钟数、平均空闲时长、生产性空闲占比
+
+      数据库表已定义在 database_provider.dart (v0.0.33):
+      - idle_time_records 表
+
+      需要创建的文件：
+      1. lib/features/idle_detector/domain/idle_time_record.dart - 领域模型
+      2. lib/features/idle_detector/data/idle_detector_repository.dart - 数据仓库
+      3. lib/features/idle_detector/presentation/idle_detector_screen.dart - 界面
+
+      请参考项目中现有功能的代码结构来保持一致性。
+      确保正确添加到 app_router.dart 中的路由。
+    assigned_to: general
+    verified_by: verifier
+    verify_prompt: 'Verify the idle_detector feature implementation is complete with all required files and proper routing.'
+    timeout_ms: 600000
+
+  # 7. Weather Correlation
+  - id: weather-correlation
+    title: '实现 Weather Correlation 功能'
+    prompt: |
+      在 C:\code\thing_note\thing_note 项目中实现 Weather Correlation 功能。
+
+      功能需求：
+      - 天气与生产力关联分析
+      - 温度、湿度、天气状况记录
+      - 生产力评分追踪
+      - 情绪和能量等级记录
+      - 按天气条件分组统计
+      - 温度范围相关性分析
+      - 个性化建议生成
+
+      数据库表已定义在 database_provider.dart (v0.0.33):
+      - weather_correlations 表
+
+      需要创建的文件：
+      1. lib/features/weather_correlation/domain/weather_correlation.dart - 领域模型
+      2. lib/features/weather_correlation/data/weather_correlation_repository.dart - 数据仓库
+      3. lib/features/weather_correlation/presentation/weather_correlation_screen.dart - 界面
+
+      请参考项目中现有功能的代码结构来保持一致性。
+      确保正确添加到 app_router.dart 中的路由。
+    assigned_to: general
+    verified_by: verifier
+    verify_prompt: 'Verify the weather_correlation feature implementation is complete with all required files and proper routing.'
+    timeout_ms: 600000
+
+  # 8. Energy Patterns
+  - id: energy-patterns
+    title: '实现 Energy Patterns 功能'
+    prompt: |
+      在 C:\code\thing_note\thing_note 项目中实现 Energy Patterns 功能。
+
+      功能需求：
+      - 能量模式追踪
+      - 24小时能量地图可视化
+      - 峰值时间识别
+      - 按星期几分析
+      - 活动类型关联
+      - 生产力影响评分
+      - 个性化建议生成
+
+      数据库表已定义在 database_provider.dart (v0.0.33):
+      - energy_patterns 表
+
+      需要创建的文件：
+      1. lib/features/energy_patterns/domain/energy_pattern.dart - 领域模型
+      2. lib/features/energy_patterns/data/energy_patterns_repository.dart - 数据仓库
+      3. lib/features/energy_patterns/presentation/energy_patterns_screen.dart - 界面
+
+      请参考项目中现有功能的代码结构来保持一致性。
+      确保正确添加到 app_router.dart 中的路由。
+    assigned_to: general
+    verified_by: verifier
+    verify_prompt: 'Verify the energy_patterns feature implementation is complete with all required files and proper routing.'
+    timeout_ms: 600000
+
+  # 9. Goal Momentum
+  - id: goal-momentum
+    title: '实现 Goal Momentum 功能'
+    prompt: |
+      在 C:\code\thing_note\thing_note 项目中实现 Goal Momentum 功能。
+
+      功能需求：
+      - 目标动力追踪
+      - 动力评分计算
+      - 连续天数追踪
+      - 周/月进度分析
+      - 加速评分
+      - 风险因素识别
+      - 预测完成时间
+      - "危险"目标高亮显示
+      - 评分等级：Strong Momentum (80+)/Good Progress (60-79)/Steady (40-59)/Slow (20-39)/At Risk (<20)
+
+      数据库表已定义在 database_provider.dart (v0.0.33):
+      - goal_momentum 表
+
+      需要创建的文件：
+      1. lib/features/goal_momentum/domain/goal_momentum.dart - 领域模型
+      2. lib/features/goal_momentum/data/goal_momentum_repository.dart - 数据仓库
+      3. lib/features/goal_momentum/presentation/momentum_screen.dart - 界面
+
+      请参考项目中现有功能的代码结构来保持一致性。
+      确保正确添加到 app_router.dart 中的路由。
+    assigned_to: general
+    verified_by: verifier
+    verify_prompt: 'Verify the goal_momentum feature implementation is complete with all required files and proper routing.'
+    timeout_ms: 600000
+
+  # 10. Micro Goals
+  - id: micro-goals
+    title: '实现 Micro Goals 功能'
+    prompt: |
+      在 C:\code\thing_note\thing_note 项目中实现 Micro Goals 功能。
+
+      功能需求：
+      - 快速5分钟目标管理
+      - 预估时间设置（1-30分钟）
+      - 优先级设置
+      - 预估/实际时间对比
+      - 快速添加和完成
+      - 完成计时
+      - 统计：待完成数、已完成数、平均完成时间、总预估时间
+
+      数据库表已定义在 database_provider.dart (v0.0.33):
+      - micro_goals 表
+
+      需要创建的文件：
+      1. lib/features/micro_goals/domain/micro_goal.dart - 领域模型
+      2. lib/features/micro_goals/data/micro_goals_repository.dart - 数据仓库
+      3. lib/features/micro_goals/presentation/micro_goals_screen.dart - 界面
+
+      请参考项目中现有功能的代码结构来保持一致性。
+      确保正确添加到 app_router.dart 中的路由。
+    assigned_to: general
+    verified_by: verifier
+    verify_prompt: 'Verify the micro_goals feature implementation is complete with all required files and proper routing.'
+    timeout_ms: 600000
+
+  # 11. Stress Detector
+  - id: stress-detector
+    title: '实现 Stress Detector 功能'
+    prompt: |
+      在 C:\code\thing_note\thing_note 项目中实现 Stress Detector 功能。
+
+      功能需求：
+      - 压力水平追踪
+      - 压力水平记录 (1-10)
+      - 触发类型分类：work/personal/health/relationships/financial/other
+      - 身体症状记录
+      - 应对策略追踪
+      - 有效性评分
+      - 压力模式识别
+      - 个性化建议
+
+      数据库表已定义在 database_provider.dart (v0.0.33):
+      - stress_indicators 表
+
+      需要创建的文件：
+      1. lib/features/stress_detector/domain/stress_indicator.dart - 领域模型
+      2. lib/features/stress_detector/data/stress_detector_repository.dart - 数据仓库
+      3. lib/features/stress_detector/presentation/stress_detector_screen.dart - 界面
+
+      请参考项目中现有功能的代码结构来保持一致性。
+      确保正确添加到 app_router.dart 中的路由。
+    assigned_to: general
+    verified_by: verifier
+    verify_prompt: 'Verify the stress_detector feature implementation is complete with all required files and proper routing.'
+    timeout_ms: 600000
+
+  # 12. Relationship Tracker
+  - id: relationship-tracker
+    title: '实现 Relationship Tracker 功能'
+    prompt: |
+      在 C:\code\thing_note\thing_note 项目中实现 Relationship Tracker 功能。
+
+      功能需求：
+      - 人际关系管理
+      - 关系类型（家人/朋友/同事/伴侣/其他）
+      - 亲近度评分 (1-5)
+      - 共享兴趣标签
+      - 最后联系日期追踪
+      - 需要关注提醒（7天未联系提醒、亲近度下降预警）
+      - 互动记录
+
+      数据库表已定义在 database_provider.dart (v0.0.33):
+      - relationships 表
+      - relationship_interactions 表
+
+      需要创建的文件：
+      1. lib/features/relationship_tracker/domain/relationship.dart - 领域模型
+      2. lib/features/relationship_tracker/data/relationship_tracker_repository.dart - 数据仓库
+      3. lib/features/relationship_tracker/presentation/relationship_tracker_screen.dart - 界面
+
+      请参考项目中现有功能的代码结构来保持一致性。
+      确保正确添加到 app_router.dart 中的路由。
+    assigned_to: general
+    verified_by: verifier
+    verify_prompt: 'Verify the relationship_tracker feature implementation is complete with all required files and proper routing.'
+    timeout_ms: 600000
+
+  # 13. Mood Prediction
+  - id: mood-prediction
+    title: '实现 Mood Prediction 功能'
+    prompt: |
+      在 C:\code\thing_note\thing_note 项目中实现 Mood Prediction 功能。
+
+      功能需求：
+      - AI情绪预测
+      - 基于历史模式预测
+      - 置信度评分
+      - 预测因素展示
+      - 实际情绪记录和对比
+      - 预测准确度追踪
+      - 未来7天预测
+      - 周预测日历展示
+
+      数据库表已定义在 database_provider.dart (v0.0.33):
+      - mood_predictions 表
+
+      需要创建的文件：
+      1. lib/features/mood_prediction/domain/mood_prediction.dart - 领域模型
+      2. lib/features/mood_prediction/data/mood_prediction_repository.dart - 数据仓库
+      3. lib/features/mood_prediction/presentation/mood_prediction_screen.dart - 界面
+
+      请参考项目中现有功能的代码结构来保持一致性。
+      确保正确添加到 app_router.dart 中的路由。
+    assigned_to: general
+    verified_by: verifier
+    verify_prompt: 'Verify the mood_prediction feature implementation is complete with all required files and proper routing.'
+    timeout_ms: 600000
